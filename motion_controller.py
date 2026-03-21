@@ -4,7 +4,7 @@ import numpy as np
 from PyQt5 import QtTest
 import serial
 
-
+print("A")
 
 class MotionController:
     def __init__(self, com_port):
@@ -27,30 +27,40 @@ class MotionController:
             return False
         
     def move_x(self, step=1, speed=100):
-        '''Move the X axis by a specified number of steps at a given speed.
-        step: Number of steps to move (positive for forward, negative for backward).'''
+        '''Move the X axis (NEMA 17 via TB6600).
+        step: Number of steps (positive = forward, negative = backward).'''
         if self.ser:
-            command = f'to be written\n'.encode()
+            command = f'X {step}\n'.encode()
             self.ser.write(command)
-            absolute_x += step
+            self.ser.readline()  # wait for Arduino acknowledgment
+            self.absolute_x += step
 
     def move_y(self, step=1, speed=100):
-        '''Move the Y axis by a specified number of steps at a given speed.
-        step: Number of steps to move (positive for forward, negative for backward).'''
-
+        '''Move the Y axis (NEMA 17 via TB6600).
+        step: Number of steps (positive = forward, negative = backward).'''
         if self.ser:
-            command = f'to be written\n'.encode()
+            command = f'Y {step}\n'.encode()
             self.ser.write(command)
-            absolute_y += step
+            self.ser.readline()  # wait for Arduino acknowledgment
+            self.absolute_y += step
 
     def move_z(self, step=1, speed=100):
-        '''Move the Z axis by a specified number of steps at a given speed.
-        step: Number of steps to move (positive for forward, negative for backward).'''
-
+        '''Move the Z axis (small stepper, TBD).
+        step: Number of steps (positive = forward, negative = backward).'''
         if self.ser:
-            command = f'to be written\n'.encode()
+            command = f'Z {step}\n'.encode()
             self.ser.write(command)
-            absolute_z += step
+            self.ser.readline()  # wait for Arduino acknowledgment
+            self.absolute_z += step
+
+    def set_speed(self, revs_per_sec):
+        '''Set motor speed. Converts rev/sec to Arduino stepDelay (µs).
+        revs_per_sec: desired speed (e.g. 1.0 = 1 rev/sec, max ~5 rev/sec).'''
+        if self.ser and revs_per_sec > 0:
+            step_delay = int(1_000_000 / (2 * revs_per_sec * 6400))
+            command = f'S {step_delay}\n'.encode()
+            self.ser.write(command)
+            self.ser.readline()
 
     def get_x(self):
         return self.absolute_x
@@ -63,3 +73,32 @@ class MotionController:
         if self.ser:
             self.ser.close()
             self.ser = None
+
+
+if __name__ == "__main__":
+    print("__main__")
+    # ── Test configuration ──────────────────────────────────────────
+    COM_PORT   = "/dev/cu.usbserial-1140"   # change to your Arduino port (e.g. "/dev/ttyUSB0" on Linux/Mac)
+    SPEED      = 1      # rev/sec
+    STEPS      = 9000      # steps to move in each direction
+    REPEATS    = 2        # how many back-and-forth cycles to run
+    # ────────────────────────────────────────────────────────────────
+
+    import time
+
+    mc = MotionController(COM_PORT)
+    mc.set_speed(SPEED)
+
+    print(f"Starting test: {REPEATS} cycles, {STEPS} steps each side, {SPEED} rev/s")
+
+    for i in range(REPEATS):
+        print(f"Cycle {i+1}/{REPEATS} — moving X+ Y+")
+        mc.move_x(STEPS)
+        mc.move_y(STEPS)
+
+        print(f"Cycle {i+1}/{REPEATS} — moving X- Y-")
+        mc.move_x(-STEPS)
+        mc.move_y(-STEPS)
+
+    mc.disconnect()
+    print("Test complete.")

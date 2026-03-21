@@ -1,0 +1,37 @@
+# Core scientific libraries
+numpy>=1.24,<2.0
+pandas>=2.0,<3.0
+scipy>=1.10,<2.0
+tensorflow>=2.12,<2.20  # Avoid OS-specific builds; 2.19 works on most platforms
+
+# Image processing and computer vision
+opencv-python>=4.5,<5.0
+scikit-image>=0.19,<0.23
+matplotlib>=3.5,<4.0
+Pillow>=9.0,<11.0
+
+# Machine learning
+scikit-learn>=1.2,<1.6
+imbalanced-learn>=0.10,<0.12
+joblib>=1.2,<2.0
+
+# Deep learning / model loading
+protobuf>=4.21,<5.0
+
+# Web server and API
+Flask>=2.2,<3.0
+Flask-SQLAlchemy>=3.0,<4.0
+python-dotenv>=1.0,<2.0
+
+# GUI (cross-platform)
+PyQt5>=5.15,<6.0
+PyQtWebEngine>=5.15,<6.0
+
+# Utilities
+tqdm>=4.60,<5.0
+requests>=2.28,<3.0
+
+# automation
+pyserial
+pyautogui
+pymodbus==2.5.3

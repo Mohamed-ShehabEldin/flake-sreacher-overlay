@@ -1,0 +1,115 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+*.whl
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+
+# Conda
+*.conda
+*.env
+
+# IDE settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+logs/
+*.log
+
+# Django
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask
+instance/
+.webassets-cache/
+
+# Sphinx
+docs/_build/
+
+# PyBuilder
+target/
+
+# Pyre / MyPy
+.pyre/
+.mypy_cache/
+dmypy.json
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Celery
+celerybeat-schedule
+
+# SageMath
+*.sage.py
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Large data & model files (keep out of Git)
+*.h5
+*.pt
+TIT_10x.h5
+*.json
+
+# Project data & checkpoints
+data/
+sam_checkpoints/
+datapoints/
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Custom folders to ignore
+sam2/
+sam2_repo/

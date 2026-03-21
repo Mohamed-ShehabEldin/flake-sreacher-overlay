@@ -1,0 +1,6 @@
+PyQt5
+pyserial
+opencv-python
+numpy
+matplotlib
+pyautogui
