@@ -92,9 +92,9 @@ def test_grid_batched(image_path, ratio, radius, thickness, batch_size, min_size
 
 # === User-configurable variables ===
 # Path to the trained model
-model_path = r"C:/Users/QMLab/Desktop/auto_scan/MODELS/WSe2_EVE Microscope_20x_ALPHA.h5"
+model_path = r"/Users/mohamedshehabeldin/Documents/GitHub/flake-sreacher-overlay/ai/auto_scan_v1/MODELS/WSe2_EVE Microscope_20x_ALPHA.h5"
 # Path to the input image
-image_path = r"C:\Users\QMLab\Desktop\auto_scan\WSe2_EVE Microscope_20x - All\f9_20x.png"
+image_path = r"/Users/mohamedshehabeldin/Documents/GitHub/flake-sreacher-overlay/ai/auto_scan_v1/WSe2_EVE Microscope_20x -  Training Data/f29_20x.png"
 # Grid sampling ratio (h/ratio × w/ratio gri
 ratio = 5# (sXXx = ratio/radius)(50x = 10/4)(20x = 5/2)(10x = 3/1)
 # Batch size for model prediction

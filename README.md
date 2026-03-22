@@ -21,20 +21,145 @@ A transparent PyQt5 overlay for a manual microscope. It sits on top of the micro
 
 ---
 
+## Installation
+
+### Step 1 — Install Miniconda
+
+Miniconda gives you the `conda` package manager, which handles Python versions and dependencies cleanly.
+
+**Mac:**
+```bash
+curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh -o miniconda.sh
+bash miniconda.sh -b -p ~/miniconda3
+~/miniconda3/bin/conda init zsh
+```
+Then **restart your terminal** (or VSCode) for `conda` to be available.
+
+**Windows:**
+Download and run the installer from:
+https://docs.anaconda.com/miniconda/
+
+During install, check **"Add Miniconda to PATH"** (or use the Miniconda Prompt that gets added to your Start Menu).
+
+---
+
+### Step 2 — Create the environment
+
+```bash
+conda create -n flake-searcher python=3.12 -y
+conda activate flake-searcher
+```
+
+> Python 3.12 is required — TensorFlow (used by the AI) does not support Python 3.13+ yet.
+
+---
+
+### Step 3 — Install dependencies
+
+```bash
+pip install tensorflow numpy pandas scipy opencv-python scikit-image matplotlib Pillow scikit-learn imbalanced-learn joblib torch torchvision PyQt5 pyserial pyautogui tqdm requests
+```
+
+---
+
+### Step 3b — Install SAM2 (AI flake segmentation)
+
+**Option A — one line (recommended):**
+```bash
+pip install git+https://github.com/facebookresearch/segment-anything-2.git
+```
+
+**Option B — clone first (no internet or want the source):**
+```bash
+git clone https://github.com/facebookresearch/segment-anything-2.git sam2_repo
+pip install sam2_repo/
+```
+
+> SAM2 installs into the conda env — no folder stays in your workspace.
+
+---
+
+### Step 4 — Upload the Arduino sketch
+
+Open `stepper_ABC_ino/stepper_ABC_ino.ino` in the Arduino IDE and upload it to your Arduino Nano.
+
+---
+
+### Step 5 — Run the app
+
+```bash
+conda activate flake-searcher
+python main.py
+```
+
+**VSCode users:** After restarting VSCode, select the interpreter via `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows) → **Python: Select Interpreter** → pick `flake-searcher`.
+
+---
+
 ## Software Structure
 
 | File | Description |
 |------|-------------|
 | `main.py` | Main window — transparent, frameless, always-on-top overlay |
 | `manual_tab.py` | Manual control tab — single-step and press-and-hold jogging |
-| `ai_tab.py` | AI settings tab |
-| `autoscan_tab.py` | Auto scan tab |
+| `training_ai_tab.py` | Train AI tab — collect data, set parameters, train and save a model |
+| `a_eye_tab.py` | A-Eye tab — load model, run inference on an image file or live screenshot |
+| `autoscan_tab.py` | Auto scan tab (in progress) |
 | `motion_controller.py` | Serial communication with Arduino (`move_x/y/z`, `set_speed`) |
 | `image_frame_manager.py` | Screenshot of the microscope view region via pyautogui |
 | `ai_logic.py` | `AutoScanPipeline` — collect, label, train, and test the flake detector |
 | `window_interaction_handler.py` | Drag and resize for the frameless window |
 | `stepper_ABC_ino/` | Arduino sketch for TB6600 + NEMA 17 step/dir control |
-| `ai/auto_scan_v1/` | AI model code using SAM2 for flake segmentation |
+| `ai/auto_scan_v1/` | AI model code — see `ai/auto_scan_v1/readme.md` for its own setup guide |
+
+---
+
+## Tabs
+
+### Manual Tab
+- **Single-step buttons** (`xp`/`xm`/`yp`/`ym`/`zp`/`zm`): move one step at the configured angle and speed
+- **Held buttons** (`xpp`/`xmm`/`ypp`/`ymm`/`zpp`/`zmm`): hold to jog continuously, release to stop
+- **Speed** and **step angle** are configurable in the tab UI
+- **Connect**: select COM port and click Connect before using
+
+### Train AI Tab
+Lets you build a new model for a new material or microscope setup:
+1. Set a **save path** (where data and model will be saved)
+2. Set the **SAM2 checkpoint path** (`sam2.1_hiera_small.pt`) — defaults to the one in `ai/auto_scan_v1/`
+3. Click **collect valid** → select a folder of valid flake images — click flakes interactively
+4. Click **collect invalid** → select a folder of images — SAM2 segments non-flake regions
+5. Click **train** → labels the data and trains the dense NN
+6. Click **save model** → save the resulting `.h5` file wherever you want
+
+Configurable parameters:
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
+| max display width | 1024 | Downscale wide images during collection (display only) |
+| grid sample size | 128 | Number of SAM2 sample points per axis for invalid collection |
+| epochs | 100 | Max training epochs (early stopping may stop sooner) |
+| batch size | 32 | Samples per gradient update |
+| test split | 0.20 | Fraction of data held out for accuracy evaluation |
+| early stop patience | 10 | Epochs to wait without improvement before stopping |
+
+### A-Eye Tab
+Run a trained model on a microscope image:
+1. Click **Chose model** → select a `.h5` model file
+2. Either:
+   - **check an image** → pick an image file from disk
+   - **check current window** → screenshots the microscope view region live
+3. Result is shown in the panel below — green dots mark detected flake grid points
+4. The **info bar** shows: `flakes: N  (raw: M)  |  HxWpx  |  bg: [R,G,B]  |  X.Xs`
+
+Configurable grid parameters:
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
+| ratio | 5 | Grid spacing — one sample per `ratio` pixels; lower = denser |
+| pred batch size | 23000 | Points sent to model at once; higher = faster |
+| dot radius | 2 | Radius of drawn detection circles in pixels |
+
+> **Note (Mac only):** `check current window` may not detect flakes because macOS applies display
+> colour management when rendering images on screen, shifting pixel values by ~10/255. Loading the
+> raw image file directly always works. This is expected to be fine on Windows.
 
 ---
 
@@ -44,35 +169,14 @@ A transparent PyQt5 overlay for a manual microscope. It sits on top of the micro
 - [x] Arduino sketch for TB6600 + NEMA 17 — step/dir/enable pulse control
 - [x] Serial command protocol: `X {steps}`, `Y {steps}`, `S {delay_us}`
 - [x] `motion_controller.py` — connect, move_x/y/z, set_speed (rev/sec)
-- [x] Manual tab fully wired — single-step buttons and press-and-hold continuous jogging (xpp/ypp/zpp)
+- [x] Manual tab fully wired — single-step and press-and-hold continuous jogging
 - [x] Live position readout (X, Y, Z step counter)
 - [x] Transparent frameless overlay window (always on top)
+- [x] Training AI tab — full data collection, label, train, save workflow
+- [x] A-Eye tab — load model, check image file or live window, display annotated result
 
 ### In Progress / Next
-- [ ] Wire `autoscan_tab.py` to `AutoScanPipeline` for real-time grid scanning
-- [ ] Fix `image_frame_manager.py` screenshot capture
-- [ ] Implement AI check in manual tab (single-frame inference)
+- [ ] Test `check current window` on Windows (expected to work — Mac colour shift issue)
+- [ ] Wire `autoscan_tab.py` to `AutoScanPipeline` for real-time raster grid scanning
 - [ ] Add Z axis hardware
 - [ ] Serpentine raster scan with dwell + inference + save detections (PNG/JSON)
-
----
-
-## AI Pipeline
-
-The AI model (`ai/auto_scan_v1/`) uses **SAM2** (Segment Anything Model 2) for flake segmentation, combined with a small dense neural network trained on collected microscope images.
-
-Steps:
-1. Collect valid/invalid flake datapoints interactively
-2. Label and combine into a dataset
-3. Train the model (`model.h5`)
-4. Run grid inference on new microscope images
-
-> The SAM2 model weights are not bundled. Follow [SAM2 installation instructions](https://github.com/facebookresearch/segment-anything-2) and ensure it is importable in your Python environment.
-
----
-
-## Requirements
-
-```
-pip install -r requirements.txt
-```

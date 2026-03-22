@@ -4,7 +4,7 @@ import os
 import glob
 import numpy as np
 
-def valid_flake_data(folder=None):
+def valid_flake_data(folder=None, save_dir=None):
     # Ask for the folder containing images
     if not folder:
         folder = input("Enter the path to the folder containing images: ").strip()
@@ -177,9 +177,8 @@ def valid_flake_data(folder=None):
 
     cv2.destroyAllWindows()
 
-    # Save data.json next to script
-    script_directory = os.getcwd()
-    save_dir = os.path.join(script_directory, "datapoints")
+    if save_dir is None:
+        save_dir = os.path.join(os.getcwd(), "datapoints")
     os.makedirs(save_dir, exist_ok=True)
     data_path = os.path.join(save_dir, "true_data_points.json")
     with open(data_path, "w") as f:
@@ -187,5 +186,5 @@ def valid_flake_data(folder=None):
     print(f"\nData saved to {data_path}")
 
 if __name__ == "__main__":
-    folder =r"C:\Users\QMLab\Desktop\auto_scan\WSe2_EVE Microscope_10x - Usable"
+    folder =r"/Users/mohamedshehabeldin/Documents/GitHub/flake-sreacher-overlay/ai/auto_scan_v1/WSe2_EVE Microscope_20x -  Training Data"
     valid_flake_data(folder=folder)

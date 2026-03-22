@@ -6,8 +6,9 @@ from PyQt5.QtCore import QTimer, Qt
 from window_interaction_handler import WindowInteractionHandler
 
 from manual_tab import ManualTab
-from ai_tab import AiTab
+from training_ai_tab import TrainingAiTab
 from autoscan_tab import AutoScan
+from a_eye_tab import A_Eye_Tab
 
 from image_frame_manager import ImageFrameManager
 class MainWindow(QMainWindow):
@@ -30,11 +31,13 @@ class MainWindow(QMainWindow):
         # tabs
         self.tab_widget: QTabWidget = self.findChild(QTabWidget, "all_tabWidget")
         self.manual_tab = ManualTab()
-        self.ai_tab = AiTab()
+        self.ai_tab = TrainingAiTab()
         self.autoscan_tab = AutoScan()
-        self.tab_widget.addTab(self.manual_tab,    "Manual Control")
-        self.tab_widget.addTab(self.ai_tab,        "AI Settings")
-        self.tab_widget.addTab(self.autoscan_tab,  "Auto Scan")
+        self.A_Eye_Tab = A_Eye_Tab(self.image_frame_manager)
+        self.tab_widget.addTab(self.manual_tab,    "Manual")
+        self.tab_widget.addTab(self.ai_tab,        "train")
+        self.tab_widget.addTab(self.A_Eye_Tab,        "A-Eye")
+        self.tab_widget.addTab(self.autoscan_tab,  "Auto")
 
         self.show()
 

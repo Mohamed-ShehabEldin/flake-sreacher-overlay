@@ -6,8 +6,10 @@ import numpy as np
 import itertools
 from sam2_predictor import FastSAMPredictor
 
-def invalid_area_data(folder=None):
-    MAX_DISPLAY_WIDTH = 1024
+DEFAULT_CHECKPOINT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sam2.1_hiera_small.pt")
+
+def invalid_area_data(folder=None, save_dir=None, checkpoint=None, max_display_width=1024, grid_sample_size=128):
+    MAX_DISPLAY_WIDTH = max_display_width
     if not folder:
         folder = input("Path to images folder: ").strip()
 
@@ -20,8 +22,8 @@ def invalid_area_data(folder=None):
     # prepare SAM
     predictor = FastSAMPredictor(
         model_cfg="configs/sam2.1/sam2.1_hiera_s.yaml",
-        checkpoint="sam2.1_hiera_small.pt",
-        device='cpu'  # or 'cuda'
+        checkpoint=checkpoint or DEFAULT_CHECKPOINT,
+        device='cpu'
     )
 
     idx = 0
@@ -133,8 +135,8 @@ def invalid_area_data(folder=None):
                 continue
 
             H, W = current_mask.shape
-            xs = np.linspace(0, W-1, 128, dtype=int)
-            ys = np.linspace(0, H-1, 128, dtype=int)
+            xs = np.linspace(0, W-1, grid_sample_size, dtype=int)
+            ys = np.linspace(0, H-1, grid_sample_size, dtype=int)
 
             true_data = {}
             false_data = {}
@@ -155,10 +157,9 @@ def invalid_area_data(folder=None):
             def load_json(p):
                 return json.load(open(p)) if os.path.exists(p) else {}
 
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            save_dir = os.path.join(script_dir, "datapoints")
-            os.makedirs(save_dir, exist_ok=True)
-            fp = os.path.join(save_dir, "false_data_points.json")
+            _save_dir = save_dir if save_dir else os.path.join(os.path.dirname(os.path.abspath(__file__)), "datapoints")
+            os.makedirs(_save_dir, exist_ok=True)
+            fp = os.path.join(_save_dir, "false_data_points.json")
             false_data = load_json(fp)
 
             true_data[fn] = tlist
@@ -188,5 +189,5 @@ def invalid_area_data(folder=None):
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    folder =r"C:\Users\QMLab\Desktop\auto_scan\WSe2_EVE Microscope_10x - Usable"
+    folder =r"/Users/mohamedshehabeldin/Documents/GitHub/flake-sreacher-overlay/ai/auto_scan_v1/WSe2_EVE Microscope_20x -  Training Data"
     invalid_area_data(folder)

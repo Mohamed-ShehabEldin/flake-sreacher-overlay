@@ -1,6 +1,29 @@
+# UI & window
 PyQt5
+pyautogui
+Pillow              # used internally by pyautogui screenshots
+
+# Hardware
 pyserial
+
+# Image processing
 opencv-python
 numpy
 matplotlib
-pyautogui
+scikit-image
+
+# AI — training pipeline
+tensorflow>=2.12,<2.22   # requires Python 3.12, not 3.13+
+scikit-learn
+imbalanced-learn
+joblib
+scipy
+pandas
+
+# AI — SAM2 segmentation (invalid data collection)
+torch>=2.0
+torchvision>=0.15
+tqdm
+requests
+
+# Note: SAM2 itself must be installed separately — see README.md Step 3b

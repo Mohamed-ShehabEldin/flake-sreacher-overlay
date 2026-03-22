@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>251</width>
+    <height>609</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QWidget" name="settings_tab" native="true">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>251</width>
+     <height>611</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(249, 255, 125);</string>
+   </property>
+   <widget class="QPushButton" name="chose_model_btn">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>10</y>
+      <width>101</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Chose model</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="chose_model_lineEdit">
+    <property name="geometry">
+     <rect>
+      <x>2</x>
+      <y>20</y>
+      <width>141</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_params">
+    <property name="geometry">
+     <rect>
+      <x>5</x>
+      <y>55</y>
+      <width>241</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font:bold 11px;</string>
+    </property>
+    <property name="text">
+     <string>── Grid Parameters ───────────</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_ratio">
+    <property name="geometry">
+     <rect>
+      <x>5</x>
+      <y>78</y>
+      <width>130</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>ratio</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="ratio_spin">
+    <property name="geometry">
+     <rect>
+      <x>145</x>
+      <y>76</y>
+      <width>96</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="minimum">
+     <number>1</number>
+    </property>
+    <property name="maximum">
+     <number>100</number>
+    </property>
+    <property name="value">
+     <number>5</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_bs">
+    <property name="geometry">
+     <rect>
+      <x>5</x>
+      <y>106</y>
+      <width>130</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>pred batch size</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="pred_batch_size_spin">
+    <property name="geometry">
+     <rect>
+      <x>145</x>
+      <y>104</y>
+      <width>96</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="maximum">
+     <number>99999</number>
+    </property>
+    <property name="value">
+     <number>23000</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_radius">
+    <property name="geometry">
+     <rect>
+      <x>5</x>
+      <y>134</y>
+      <width>130</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>dot radius</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="radius_spin">
+    <property name="geometry">
+     <rect>
+      <x>145</x>
+      <y>132</y>
+      <width>96</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="minimum">
+     <number>1</number>
+    </property>
+    <property name="maximum">
+     <number>50</number>
+    </property>
+    <property name="value">
+     <number>2</number>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="check_current_win_btn">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>320</y>
+      <width>141</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>check current window</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="check_an_img_btn">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>320</y>
+      <width>101</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>check an image</string>
+    </property>
+   </widget>
+   <widget class="QGraphicsView" name="graphicsView">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>360</y>
+      <width>231</width>
+      <height>231</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="info">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>290</y>
+      <width>221</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>info</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

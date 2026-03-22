@@ -8,7 +8,7 @@ from tqdm.keras import TqdmCallback  # progress bar callback
 
 # Load your labeled data from the JSON file (final_data.json)
 
-def train(data):
+def train(data, epochs=100, batch_size=32, test_size=0.2, patience=10):
     # Extract features and labels.
     # Each item is a dictionary with keys "filename" and "data".
     # "data" is a list: [background_rgb, flake_rgb, label]
@@ -28,7 +28,7 @@ def train(data):
     features = features / 255.0
 
     # Split the dataset into training and test sets (80% training, 20% test)
-    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=test_size, random_state=42)
 
     # Build a deep neural network model using Keras
     model = keras.Sequential([
@@ -47,13 +47,12 @@ def train(data):
     model.summary()
 
     # Set up an early stopping callback to prevent overfitting
-    early_stopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+    early_stopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True)
 
-    # Train the model (with 20% of training data used for validation)
     history = model.fit(
         X_train, y_train,
-        epochs=100,
-        batch_size=32, ###32
+        epochs=epochs,
+        batch_size=batch_size,
         validation_split=0.2,
         callbacks=[early_stopping, TqdmCallback(verbose=1)]
     )

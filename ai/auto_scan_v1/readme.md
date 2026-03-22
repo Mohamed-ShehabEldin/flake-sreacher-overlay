@@ -1,65 +1,234 @@
-# Data Aquisition
+# Auto Scan v1 — AI Flake Detector
 
-## recommended: create virtual environment python >= 3.10
-### 1. Create a new conda environment named "auto_scan" with Python 3.10
-conda env remove -n auto_scan
+Detects valid 2D material flakes (e.g. graphene, WSe2) in microscope images using SAM2 for segmentation and a small dense neural network for classification.
 
-conda create --name auto_scan python=3.10 -y
-'''
-if you don't have conda, istall miniconda>conda prompt>write code>hit enter
-'''
+The pipeline has two modes:
+- **Standalone** — run the scripts directly from this folder
+- **Integrated** — used via the Flake Searcher Overlay app (Train AI tab + A-Eye tab)
 
-### 2. Activate it
-conda activate auto_scan
+---
 
-### (Optional) 3. Verify you’re on the right Python version
-python --version
+## Installation
 
-### install dependencies
+### Step 1 — Install Miniconda
+
+**Mac (Apple Silicon):**
+```bash
+curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh -o miniconda.sh
+bash miniconda.sh -b -p ~/miniconda3
+~/miniconda3/bin/conda init zsh
+```
+Restart your terminal after this.
+
+**Windows:**
+Download and run the installer from https://docs.anaconda.com/miniconda/
+Check **"Add Miniconda to PATH"** during install, then use the Miniconda Prompt.
+
+---
+
+### Step 2 — Create the environment
+
+```bash
+conda create -n flake-searcher python=3.12 -y
+conda activate flake-searcher
+```
+
+> Python 3.12 is required — TensorFlow does not support Python 3.13+ yet.
+
+---
+
+### Step 3 — Install Python dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
+Or from the repo root:
+```bash
+pip install tensorflow numpy pandas scipy opencv-python scikit-image matplotlib Pillow scikit-learn imbalanced-learn joblib torch torchvision PyQt5 pyserial pyautogui tqdm requests
+```
 
-## First install sam2 by the following steps:
-'''download git first if you don't have it'''
-git clone https://github.com/facebookresearch/sam2.git
-cd sam2
-pip install -e .
-cd ..
-mv sam2 sam2_repo '''(you can rename it manually)'''
-mv sam2_repo/sam2 .
-### install the hiera_small checkpoint
+---
 
-wget https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_small.pt
-'''download it manually from the link'''
+### Step 4 — Install SAM2
 
-or
-### for mac:
-curl -L -o sam2.1_hiera_small.pt \
+**Option A — one line, no folder needed (recommended):**
+```bash
+pip install git+https://github.com/facebookresearch/segment-anything-2.git
+```
+
+**Option B — clone first then install (if you have no internet or want the source):**
+```bash
+git clone https://github.com/facebookresearch/segment-anything-2.git sam2_repo
+pip install sam2_repo/
+```
+
+> SAM2 gets installed into the conda env. You do NOT need to keep `sam2_repo/` in your workspace after installing.
+
+---
+
+### Step 5 — Download the SAM2 checkpoint
+
+Place the checkpoint file at `ai/auto_scan_v1/sam2.1_hiera_small.pt` (the app defaults to this path).
+
+**Mac / Linux:**
+```bash
+curl -L -o ai/auto_scan_v1/sam2.1_hiera_small.pt \
      https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_small.pt
+```
 
+**Windows:**
+```bash
+curl -L -o ai\auto_scan_v1\sam2.1_hiera_small.pt https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_small.pt
+```
 
-## getting datapoints
-'''make sure the path in the terminal is PS C:\Users\QMLab\Desktop\auto_scan> '''
+Or download manually from the link above.
 
-### folder
-The folder of training data needs to be all images in the formats: "*.jpg","*.jpeg","*.png","*.bmp","*.tiff"
+---
 
-### valid flakes
-Input the folder of images you want to use in the folder variable in "valid_falke_data.py" and run the program. The program will load all images in the folder and on each image, you will left click on the flakes you think is valid, the program will generate a point at where you clicked. If you think the point is good, press "s" to save that data point, you can save as many data points as you want per image and it is recommended to select multiple points on the flake at different locations such as edges and center. You can clear the point you put down by pressing "c", and you can navigate between the images with "a" and "d". You can also zoom in and out with (shift) + and -. When you are zoomed in, you can pan left/right/up/down with the arrow keys. At the end, press "ESC" to quit. The program may have delays for generating a point at where you clicked if the image is large(high resolution).
+## Usage — Standalone Scripts
 
-### invalid flakes and background using segmentation
+### 1. Collect valid flake datapoints
 
-The "invalid_area_data.py" is used for getting the data points for the false values which are the flakes that are too thick and the background. Input the folder of trainning images and run the program. To generate data, you will left click to add a point for generating a segmentation. Please click on all the flakes that you think is valid. If you think there is at least a point on every valid flake, you can then press the space bar to generate a mask around the flakes you've selected(give some time for the mask generation). Make sure that all parts of the valid flakes are covered by the segmentation. It's okay if unvalid flakes and backgrounds are included by the segmentation but it is important that all parts of the valid flake is included in the mask (it's okay if only a tiny tiny part isn't, but it is prefered that all parts are included). If the mask isn't good, you can press "c" to clear all clicks and masks and restart. If you think the mask is good, press "s" to save the datapoints. You can navigate between images with a and d, and quit the program with "ESC"
+```bash
+python valid_flake_data.py
+```
 
-## data labeling
+Set `folder` and `save_dir` at the top of the script. An OpenCV window opens for each image.
 
-Run the data_labeling.py file and you will get a final_data.json which you can use to train the model.
+**Controls:**
+- `Left click` — place a point on a valid flake
+- `S` — save the current point
+- `C` — clear the current point
+- `A` / `D` — previous / next image
+- `+` / `-` — zoom in / out
+- Arrow keys — pan when zoomed in
+- `ESC` — quit
 
-## Training
+Saves `datapoints/true_data_points.json`.
 
-run the model.py file with the final_data.json file to get a model.
+---
 
-## Testing
+### 2. Collect invalid flake and background datapoints
 
-to test the model on an image, in gird_test_2.0.py input the model path and image path and then run the program.
-'''scratches and bilayers can give fals positives'''
+```bash
+python invalid_area_data.py
+```
+
+Set `folder`, `save_dir`, and `checkpoint` (path to `sam2.1_hiera_small.pt`) at the top.
+
+**Controls:**
+- `Left click` — add a point to guide SAM2 segmentation
+- `Space` — generate segmentation mask around valid flakes
+- `S` — save datapoints once the mask looks good
+- `C` — clear all clicks and masks, restart current image
+- `A` / `D` — previous / next image
+- `ESC` — quit
+
+> Make sure all valid flake regions are covered by the mask before saving. The points OUTSIDE the mask become the invalid datapoints.
+
+Saves `datapoints/false_data_points.json`.
+
+---
+
+### 3. Label and combine the data
+
+```bash
+python data_labeling.py
+```
+
+Reads `true_data_points.json` and `false_data_points.json`, adds class labels, combines and shuffles them.
+Outputs `datapoints/final_data.json`.
+
+---
+
+### 4. Train the model
+
+```bash
+python model.py
+```
+
+Trains a small dense neural network on `final_data.json`.
+Outputs `model.h5` (or path configured in script).
+
+Configurable at the top of `model.py`:
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
+| epochs | 100 | Max training epochs |
+| batch_size | 32 | Samples per gradient update |
+| test_size | 0.20 | Fraction held out for evaluation |
+| patience | 10 | Early stopping patience |
+
+---
+
+### 5. Test on a new image
+
+```bash
+python grid_test.py
+```
+
+Set `model_path`, `test_image_path`, `ratio`, `batch_size`, `radius` at the bottom of the script.
+
+```python
+if __name__ == '__main__':
+    model_path = r"path/to/model.h5"
+    test_image_path = r"path/to/image.png"
+    _model = keras.models.load_model(model_path)
+    matrix, img_disp, stats = test_grid_batched(test_image_path, _model, ratio=5, batch_size=4096)
+    cv2.imshow('result', img_disp)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+```
+
+`test_grid_batched` returns `(cls_mat, img_disp, stats)`:
+- `cls_mat` — 2D matrix of predicted classes (0=background, 1=flake, 2=other)
+- `img_disp` — original image annotated with green circles on detected flakes
+- `stats` — dict with `h, w, rows, cols, bg, raw, filtered, elapsed`
+
+> Note: scratches and bilayers can produce false positives.
+
+---
+
+## Usage — Via the Overlay App
+
+The **Train AI** tab in the app replaces steps 1–4 above with a GUI:
+- Set save path and SAM2 checkpoint path
+- Collect valid / invalid interactively
+- Click train → click save model
+
+The **A-Eye** tab replaces step 5:
+- Load a `.h5` model
+- Click **check an image** (from disk) or **check current window** (live screenshot)
+- Result shown in the panel with stats
+
+### Recommended parameters by magnification
+
+| Magnification | ratio | dot radius |
+|---------------|-------|------------|
+| 50x           | 10    | 4          |
+| 20x           | 5     | 2          |
+| 10x           | 3     | 1          |
+
+---
+
+## Model details
+
+- **Input**: 6 features per grid point — `[bg_R, bg_G, bg_B, px_R, px_G, px_B]` (normalised to 0–1)
+  - `bg` = background colour (mode of each channel across the whole image)
+  - `px` = colour at the sampled grid point
+- **Output**: 3 classes — 0 background, 1 valid flake, 2 other (e.g. thick/bilayer)
+- **Architecture**: small dense neural network (TensorFlow/Keras), saved as `.h5`
+- **Post-processing**: connected-component cluster filter removes isolated detections < 5 grid points
+
+### Known limitation — display colour shift (Mac)
+
+The model is trained on raw image files. On Mac, the OS applies ICC colour management when displaying images, shifting pixel values by ~10/255 per channel. This means the `check current window` (screenshot) path may fail on Mac while the raw file path works fine.
+On Windows this effect is much smaller and inference from screenshots is expected to work normally.
+
+---
+
+## Training data format
+
+Images can be: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.tiff`
+
+Place all training images in a single folder and point the scripts (or the app) to it.

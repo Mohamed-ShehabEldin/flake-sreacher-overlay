@@ -39,16 +39,20 @@ def filter_clusters_by_size(binary_mat, min_size=5, connectivity=8):
             filtered[labels == lbl] = 1
     return filtered
 
-def test_grid_batched(image_path, ratio=10, radius=4, thickness=-1, batch_size=256):
+def test_grid_batched(image_path, model, ratio=10, radius=4, thickness=-1, batch_size=256):
     """
     Sample points on a rows×cols grid, predict in batch,
-    draw red/green circles for classes 0/1, and return a matrix of class labels.
+    draw green circles for flake detections, and return (cls_mat, img_disp).
     Small clusters (<5 points) are zeroed out.
+    image_path can be a file path (str) or a numpy BGR image array.
     """
     start = time.time()
-    img_bgr = cv2.imread(image_path)
-    if img_bgr is None:
-        raise FileNotFoundError(f"Could not load image: {image_path}")
+    if isinstance(image_path, str):
+        img_bgr = cv2.imread(image_path)
+        if img_bgr is None:
+            raise FileNotFoundError(f"Could not load image: {image_path}")
+    else:
+        img_bgr = image_path
     img_disp = img_bgr.copy()
     img_rgb  = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
     bg_color = compute_background_color(img_rgb)
@@ -72,15 +76,20 @@ def test_grid_batched(image_path, ratio=10, radius=4, thickness=-1, batch_size=2
 
     preds = model.predict(X, batch_size=batch_size, verbose=1)
     cls   = np.argmax(preds, axis=1)
-    
+
+    raw_true = int(np.sum(cls == 1))
+
     # reshape and filter clusters
     cls_mat = cls.reshape(rows, cols)
     cls_mat = filter_clusters_by_size(cls_mat, min_size=5, connectivity=8)
-    end   = time.time()
-    true_count  = int(np.sum(cls_mat == 1))
-    total_count = len(cls_mat)
-    print(f"Predicted TRUE at {true_count} out of {total_count} grid points.")
-    print(f'took {end-start} seconds')
+    end = time.time()
+
+    filtered_true = int(np.sum(cls_mat == 1))
+    elapsed = end - start
+
+    print(f"Image: {h}x{w}  grid: {rows}x{cols}  bg: {bg_color}")
+    print(f"Raw TRUE: {raw_true}  After filter: {filtered_true}  ({elapsed:.1f}s)")
+
     # draw only filtered clusters
     for i in range(rows):
         for j in range(cols):
@@ -89,16 +98,26 @@ def test_grid_batched(image_path, ratio=10, radius=4, thickness=-1, batch_size=2
             color = (0,255,0) if c==1 else (0,0,0)
             cv2.circle(img_disp, (x, y), radius, color, thickness)
 
-    cv2.imshow(f'Batched Grid {rows}×{cols}', img_disp)
-    cv2.waitKey(0)
-    cv2.destroyWindow(f'Batched Grid {rows}×{cols}')
-    return cls_mat
+    stats = {
+        'h': h, 'w': w,
+        'rows': rows, 'cols': cols,
+        'bg': bg_color,
+        'raw': raw_true,
+        'filtered': filtered_true,
+        'elapsed': elapsed,
+    }
+    return cls_mat, img_disp, stats
 
 
 if __name__ == '__main__':
-    model_path = r"C:/Users/QMLab/Desktop/auto_scan/TIT_10x.h5"
-    model = keras.models.load_model(model_path)
+    model_path = r"/Users/mohamedshehabeldin/Documents/GitHub/flake-sreacher-overlay/ai/auto_scan_v1/MODELS/WSe2_EVE Microscope_20x_ALPHA.h5"
+    # Path to the input image
+    _model = keras.models.load_model(model_path)
+    test_image_path = r"/Users/mohamedshehabeldin/Documents/GitHub/flake-sreacher-overlay/ai/auto_scan_v1/WSe2_EVE Microscope_20x -  Training Data/f29_20x.png"
 
-    test_image_path = r"C:\Users\QMLab\Desktop\auto_scan\Flake Photos v3\f6.png"
-    matrix = test_grid_batched(test_image_path,ratio =5, batch_size=4096)
+    matrix, img_disp, stats = test_grid_batched(test_image_path, _model, ratio=5, batch_size=4096)
     print(matrix)
+    print(stats)
+    cv2.imshow('result', img_disp)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()

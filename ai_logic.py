@@ -37,148 +37,103 @@ matrix = pipeline.test("some_image.png")
 """
 
 import os
+import sys
 import json
 from pathlib import Path
-from typing import Optional
 
-from ai.auto_scan.valid_flake_data import valid_flake_data
-from ai.auto_scan.invalid_area_data import invalid_area_data
-from ai.auto_scan.data_labeling import add_label_to_data, combine_and_shuffle
-from ai.auto_scan.model import train as _train_model
-from ai.auto_scan.grid_test import test_grid_batched
+# add ai/auto_scan_v1 to path so we can import the student's modules directly
+sys.path.insert(0, str(Path(__file__).parent / "ai" / "auto_scan_v1"))
+
+from valid_flake_data import valid_flake_data
+from invalid_area_data import invalid_area_data
+from data_labeling import add_label_to_data, combine_and_shuffle
+from model import train as _train_model
+from grid_test import test_grid_batched
 
 
 class AutoScanPipeline:
-    """End‑to‑end workflow controller for flake selection, model training, and testing."""
 
-    def __init__(
-        self,
-        data_folder: str,
-        datapoints_dir: str = "datapoints",
-        model_name: str = "model.h5",
-    ):
-        self.data_folder = Path(data_folder).expanduser().resolve()
-        self.datapoints_dir = Path(datapoints_dir).expanduser().resolve()
+    def __init__(self, save_dir: str):
+        self.save_dir = Path(save_dir).expanduser().resolve()
+        self.datapoints_dir = self.save_dir / "datapoints"
         self.datapoints_dir.mkdir(parents=True, exist_ok=True)
 
-        self.true_json = self.datapoints_dir / "true_data_points.json"
-        self.false_json = self.datapoints_dir / "false_data_points.json"
+        self.true_json         = self.datapoints_dir / "true_data_points.json"
+        self.false_json        = self.datapoints_dir / "false_data_points.json"
         self.labeled_true_json = self.datapoints_dir / "labeled_true_data_points.json"
-        self.labeled_false_json = self.datapoints_dir / "labeled_false_data_points.json"
-        self.final_json = Path("final_data.json")
-        self.model_path = Path(model_name)
+        self.labeled_false_json= self.datapoints_dir / "labeled_false_data_points.json"
+        self.final_json        = self.datapoints_dir / "final_data.json"
+        self.model_path        = self.save_dir / "model.h5"
 
     # ---------- DATA COLLECTION -------------------------------------------------
 
-    def collect_valid(self):
-        """
-        Launch the OpenCV UI to collect datapoints on valid flakes
-        (few‑layer, desirable thickness). Data are saved to true_data_points.json.
-        """
+    def collect_valid(self, folder: str):
         print("[AutoScan] Collecting VALID datapoints …")
-        valid_flake_data(folder=str(self.data_folder))
-        if not self.true_json.exists():
-            raise RuntimeError("Expected true_data_points.json was not created.")
-        print(f"[AutoScan] ✅ Saved valid datapoints → {self.true_json}")
+        valid_flake_data(folder=folder, save_dir=str(self.datapoints_dir))
+        print(f"[AutoScan] Saved → {self.true_json}")
 
-    def collect_invalid(self):
-        """
-        Launch the SAM‑assisted UI to collect datapoints on invalid flakes + background.
-        Data are saved to false_data_points.json.
-        """
+    def collect_invalid(self, folder: str, checkpoint=None, max_display_width=1024, grid_sample_size=128):
         print("[AutoScan] Collecting INVALID datapoints …")
-        invalid_area_data(folder=str(self.data_folder))
-        if not self.false_json.exists():
-            raise RuntimeError("Expected false_data_points.json was not created.")
-        print(f"[AutoScan] ✅ Saved invalid datapoints → {self.false_json}")
+        invalid_area_data(folder=folder, save_dir=str(self.datapoints_dir), checkpoint=checkpoint,
+                          max_display_width=max_display_width, grid_sample_size=grid_sample_size)
+        print(f"[AutoScan] Saved → {self.false_json}")
 
     # ---------- LABEL MERGING ----------------------------------------------------
 
     def label(self):
-        """
-        Convert raw datapoints to a single shuffled dataset ready for model training.
-        Creates:
-          labeled_true_data_points.json
-          labeled_false_data_points.json
-          final_data.json
-        """
         print("[AutoScan] Labelling datapoints …")
         add_label_to_data(str(self.true_json), label=1, output_path=str(self.labeled_true_json))
         add_label_to_data(str(self.false_json), label=0, output_path=str(self.labeled_false_json))
-        combine_and_shuffle(
-            str(self.labeled_true_json),
-            str(self.labeled_false_json),
-            output_file=str(self.final_json),
-        )
-        print(f"[AutoScan] ✅ Combined & shuffled dataset → {self.final_json}")
+        combine_and_shuffle(str(self.labeled_true_json), str(self.labeled_false_json), output_file=str(self.final_json))
+        print(f"[AutoScan] Saved → {self.final_json}")
 
     # ---------- TRAINING ---------------------------------------------------------
 
-    def train(self, json_path: Optional[str] = None, **train_kwargs):
-        """
-        Train a small dense neural network on the labelled dataset.
-
-        Parameters
-        ----------
-        json_path : str, optional
-            Override default final_data.json location.
-        **train_kwargs
-            Extra kwargs forwarded to `model.train()` (e.g., epochs, batch_size).
-        """
-        json_path = json_path or str(self.final_json)
-        if not Path(json_path).exists():
-            raise FileNotFoundError(f"Dataset not found: {json_path}")
-
-        with open(json_path, "r") as f:
+    def train(self, epochs=100, batch_size=32, test_size=0.2, patience=10):
+        if not self.final_json.exists():
+            raise FileNotFoundError(f"Run label() first — {self.final_json} not found.")
+        with open(self.final_json, "r") as f:
             data = json.load(f)
-
         print("[AutoScan] Training model …")
-        _train_model(data, **train_kwargs)
-        # `_train_model` always saves under a fixed name inside model.py,
-        # but we also copy/rename for consistency
+        _train_model(data, epochs=epochs, batch_size=batch_size, test_size=test_size, patience=patience)
         default_output = Path("TIT_10x.h5")
         if default_output.exists():
             default_output.rename(self.model_path)
-        print(f"[AutoScan] ✅ Trained model saved → {self.model_path}")
+        print(f"[AutoScan] Model saved → {self.model_path}")
 
     # ---------- TESTING ----------------------------------------------------------
 
-    def test(
-        self,
-        image_path: str,
-        ratio: int = 14,
-        batch_size: int = 4096,
-        radius: int = 5,
-        thickness: int = -1,
-        **grid_kwargs,
-    ):
-        """
-        Run the trained model on a new microscope image using batched grid sampling.
-
-        Returns
-        -------
-        np.ndarray
-            Matrix of predicted classes (shape rows × cols).
-        """
+    def load_model(self):
         if not self.model_path.exists():
             raise FileNotFoundError(f"Model file not found: {self.model_path}")
-        print(f"[AutoScan] Testing image → {image_path}")
+        from tensorflow import keras as _keras
+        self._model = _keras.models.load_model(str(self.model_path))
+        print(f"[AutoScan] Model loaded ← {self.model_path}")
 
-        # grid_test expects `model` to be loaded globally; monkey‑patch here:
-        import tensorflow as keras  # type: ignore
-        global model
-        model = keras.models.load_model(str(self.model_path))
+    def load_model_from_path(self, path: str):
+        from tensorflow import keras as _keras
+        self._model = _keras.models.load_model(path)
+        print(f"[AutoScan] Model loaded ← {path}")
 
-        matrix = test_grid_batched(
+    def test(self, image_path, ratio=14, batch_size=4096, radius=5, thickness=-1):
+        """
+        Run the loaded model on an image.
+        image_path: file path (str) or numpy BGR image array.
+        Returns (cls_mat, img_disp).
+        """
+        if not hasattr(self, '_model') or self._model is None:
+            raise RuntimeError("Load a model first with load_model() or load_model_from_path().")
+        print(f"[AutoScan] Running inference ...")
+        cls_mat, img_disp, stats = test_grid_batched(
             image_path,
+            self._model,
             ratio=ratio,
             batch_size=batch_size,
             radius=radius,
             thickness=thickness,
-            **grid_kwargs,
         )
-        print("[AutoScan] ✅ Finished inference.")
-        return matrix
+        print("[AutoScan] Finished inference.")
+        return cls_mat, img_disp, stats
 
 
 if __name__ == "__main__":
