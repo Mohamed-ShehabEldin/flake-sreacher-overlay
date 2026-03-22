@@ -283,19 +283,6 @@
      <string>+</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="saving_folder_3">
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>390</y>
-      <width>81</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>saving folder</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
@@ -333,19 +320,6 @@
     </property>
     <property name="text">
      <string>-----------------------------</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="saving_folder_4">
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>350</y>
-      <width>81</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>ai check</string>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="z_angle_bx">
@@ -440,9 +414,9 @@
    <widget class="QLabel" name="coord_display">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>300</y>
-      <width>101</width>
+      <x>60</x>
+      <y>310</y>
+      <width>131</width>
       <height>20</height>
      </rect>
     </property>
@@ -526,6 +500,120 @@
     </property>
     <property name="text">
      <string>--</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="move_to_x_btn">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>380</y>
+      <width>81</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>move to x</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="move_to_y_btn">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>410</y>
+      <width>81</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>move to y</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="move_to_z_btn">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>440</y>
+      <width>81</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>move to z</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="move_to_x_spinbx">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>380</y>
+      <width>81</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="decimals">
+     <number>3</number>
+    </property>
+    <property name="minimum">
+     <double>-10000000.000000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>10000000.000000000000000</double>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
+    <property name="value">
+     <double>1.000000000000000</double>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="move_to_y_spinbx">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>410</y>
+      <width>81</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="decimals">
+     <number>3</number>
+    </property>
+    <property name="minimum">
+     <double>-10000000.000000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>10000000.000000000000000</double>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
+    <property name="value">
+     <double>1.000000000000000</double>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="move_to_z_spinbx">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>440</y>
+      <width>81</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="decimals">
+     <number>3</number>
+    </property>
+    <property name="minimum">
+     <double>-10000000.000000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>10000000.000000000000000</double>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
+    <property name="value">
+     <double>1.000000000000000</double>
     </property>
    </widget>
   </widget>

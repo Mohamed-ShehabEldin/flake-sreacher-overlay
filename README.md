@@ -85,6 +85,12 @@ Open `stepper_ABC_ino/stepper_ABC_ino.ino` in the Arduino IDE and upload it to y
 
 ---
 
+### Step 4b — PyTorch with GPU (Windows + NVIDIA, optional)
+
+The `pip install` above installs CPU-only PyTorch. If you have an NVIDIA GPU and want faster SAM2 segmentation, install the CUDA version instead. Go to [pytorch.org/get-started](https://pytorch.org/get-started/locally/), select your CUDA version, and run the command shown there (e.g. `pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121`). Skip this if you don't have a NVIDIA GPU — CPU works fine.
+
+---
+
 ### Step 5 — Run the app
 
 ```bash
@@ -93,6 +99,8 @@ python main.py
 ```
 
 **VSCode users:** After restarting VSCode, select the interpreter via `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows) → **Python: Select Interpreter** → pick `flake-searcher`.
+
+> **macOS — Screen Recording permission:** `pyautogui` captures the screen to read the microscope view. On Mac you must grant Screen Recording permission to your Terminal (or VSCode). Go to **System Settings → Privacy & Security → Screen Recording** and enable it for Terminal / VSCode. Restart the app after granting permission.
 
 ---
 
@@ -120,7 +128,8 @@ python main.py
 - **Single-step buttons** (`xp`/`xm`/`yp`/`ym`/`zp`/`zm`): move one step at the configured angle and speed; pressing multiple times while a move is in progress queues the extra moves — they execute one-by-one with a coordinate update after each
 - **Held buttons** (`xpp`/`xmm`/`ypp`/`ymm`/`zpp`/`zmm`): hold to jog continuously, release to stop
 - **Speed** and **step angle** are configurable in the tab UI
-- **Connect**: select COM port and click Connect before using
+- **Connect**: select COM port and click Connect before using — on Windows ports appear as `COM3`, `COM4` etc.; on Mac as `/dev/cu.usbserial-XXXX`
+- **Move to**: enter an absolute step position in the spin box next to `move_to_x/y/z` and click the button — the stage moves the exact difference from its current position
 
 ### Train AI Tab
 Lets you build a new model for a new material or microscope setup:

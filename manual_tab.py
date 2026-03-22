@@ -15,7 +15,6 @@ class ManualTab(QWidget):
         uic.loadUi("manual_tab.ui", self)
 
         self.motion_controller  = None
-        self.saving_folder      = ""
         self._current_worker    = None
         self._workers           = []   # strong refs — prevent GC while thread runs
         self._move_queue        = deque()
@@ -50,8 +49,10 @@ class ManualTab(QWidget):
         self.zpp.released.connect(self._stop_continuous)
         self.zmm.released.connect(self._stop_continuous)
 
-        self.saving_folder_3.clicked.connect(self.pick_saving_folder)
-        self.saving_folder_4.clicked.connect(self.ai_check)
+        # move-to absolute position
+        self.move_to_x_btn.clicked.connect(self.move_to_x)
+        self.move_to_y_btn.clicked.connect(self.move_to_y)
+        self.move_to_z_btn.clicked.connect(self.move_to_z)
 
         QtTest.QTest.qWait(200)
 
@@ -154,18 +155,27 @@ class ManualTab(QWidget):
         speed, steps = self.z_speed_bx.value(), self.z_angle_bx.value()
         self._run(lambda: (mc.set_speed(speed), mc.move_z(-steps)))
 
+    def move_to_x(self):
+        mc = self.motion_controller
+        steps = self.move_to_x_spinbx.value() - mc.get_x()
+        if steps != 0:
+            speed = self.x_speed_bx.value()
+            self._run(lambda: (mc.set_speed(speed), mc.move_x(steps)))
+
+    def move_to_y(self):
+        mc = self.motion_controller
+        steps = self.move_to_y_spinbx.value() - mc.get_y()
+        if steps != 0:
+            speed = self.y_speed_bx.value()
+            self._run(lambda: (mc.set_speed(speed), mc.move_y(steps)))
+
+    def move_to_z(self):
+        mc = self.motion_controller
+        steps = self.move_to_z_spinbx.value() - mc.get_z()
+        if steps != 0:
+            speed = self.z_speed_bx.value()
+            self._run(lambda: (mc.set_speed(speed), mc.move_z(steps)))
+
     def show_coords(self):
         mc = self.motion_controller
         self.coord_display.setText(f"X: {mc.get_x()}, Y: {mc.get_y()}, Z: {mc.get_z()}")
-
-
-    ######## other ########
-
-    def pick_saving_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select Saving Folder")
-        if folder:
-            self.saving_folder = folder
-            print(f"Saving folder set to: {self.saving_folder}")
-
-    def ai_check(self):
-        print("AI check — not implemented yet")
