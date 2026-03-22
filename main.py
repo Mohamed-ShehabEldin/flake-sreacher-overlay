@@ -30,13 +30,13 @@ class MainWindow(QMainWindow):
 
         # tabs
         self.tab_widget: QTabWidget = self.findChild(QTabWidget, "all_tabWidget")
-        self.manual_tab = ManualTab()
-        self.ai_tab = TrainingAiTab()
-        self.autoscan_tab = AutoScan()
-        self.A_Eye_Tab = A_Eye_Tab(self.image_frame_manager)
+        self.manual_tab   = ManualTab()
+        self.ai_tab       = TrainingAiTab()
+        self.A_Eye_Tab    = A_Eye_Tab(self.image_frame_manager)
+        self.autoscan_tab = AutoScan(self.manual_tab, self.image_frame_manager, self.A_Eye_Tab)
         self.tab_widget.addTab(self.manual_tab,    "Manual")
-        self.tab_widget.addTab(self.ai_tab,        "train")
-        self.tab_widget.addTab(self.A_Eye_Tab,        "A-Eye")
+        self.tab_widget.addTab(self.ai_tab,        "Train")
+        self.tab_widget.addTab(self.A_Eye_Tab,     "A-Eye")
         self.tab_widget.addTab(self.autoscan_tab,  "Auto")
 
         self.show()

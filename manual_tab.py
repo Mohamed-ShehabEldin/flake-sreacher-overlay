@@ -1,13 +1,11 @@
 from PyQt5.QtWidgets import QWidget, QFileDialog
-from PyQt5.QtCore import QTimer
 from PyQt5 import uic
 import serial.tools.list_ports
 from PyQt5 import QtTest
 
-from motion_controller import MotionController
+from motion_controller import MotionController, MotionWorker
 
-CONTINUOUS_STEPS = 100   # steps sent per timer tick for held buttons
-CONTINUOUS_MS    = 50    # timer interval in ms
+CONTINUOUS_STEPS = 100
 
 
 class ManualTab(QWidget):
@@ -15,15 +13,12 @@ class ManualTab(QWidget):
         super().__init__()
         uic.loadUi("manual_tab.ui", self)
 
-        self.motion_controller = None
-        self.saving_folder = ""
+        self.motion_controller  = None
+        self.saving_folder      = ""
+        self._current_worker    = None
+        self._continuous_active = False
+        self._continuous_fn     = None
 
-        # timer for continuous (held) buttons
-        self.continuous_timer = QTimer()
-        self.continuous_timer.timeout.connect(self.continuous_move)
-        self.continuous_fn = None   # set when a held button is pressed
-
-        # populate COM ports and connect the connect button
         ports = [port.device for port in serial.tools.list_ports.comports()]
         self.combo_connect_M.addItems(ports)
         self.push_connect_M.clicked.connect(self.connect_M_device)
@@ -36,22 +31,21 @@ class ManualTab(QWidget):
         self.zp.pressed.connect(self.zpf)
         self.zm.pressed.connect(self.zmf)
 
-        # held buttons — start moving on press, stop on release
-        self.xpp.pressed.connect(lambda: self.start_continuous(self.motion_controller.move_x,  CONTINUOUS_STEPS, self.x_speed_bx))
-        self.xmm.pressed.connect(lambda: self.start_continuous(self.motion_controller.move_x, -CONTINUOUS_STEPS, self.x_speed_bx))
-        self.ypp.pressed.connect(lambda: self.start_continuous(self.motion_controller.move_y,  CONTINUOUS_STEPS, self.y_speed_bx))
-        self.ymm.pressed.connect(lambda: self.start_continuous(self.motion_controller.move_y, -CONTINUOUS_STEPS, self.y_speed_bx))
-        self.zpp.pressed.connect(lambda: self.start_continuous(self.motion_controller.move_z,  CONTINUOUS_STEPS, self.z_speed_bx))
-        self.zmm.pressed.connect(lambda: self.start_continuous(self.motion_controller.move_z, -CONTINUOUS_STEPS, self.z_speed_bx))
+        # held buttons — continuous while pressed, stop on release
+        self.xpp.pressed.connect(lambda: self._start_continuous(self.motion_controller.move_x,  CONTINUOUS_STEPS, self.x_speed_bx))
+        self.xmm.pressed.connect(lambda: self._start_continuous(self.motion_controller.move_x, -CONTINUOUS_STEPS, self.x_speed_bx))
+        self.ypp.pressed.connect(lambda: self._start_continuous(self.motion_controller.move_y,  CONTINUOUS_STEPS, self.y_speed_bx))
+        self.ymm.pressed.connect(lambda: self._start_continuous(self.motion_controller.move_y, -CONTINUOUS_STEPS, self.y_speed_bx))
+        self.zpp.pressed.connect(lambda: self._start_continuous(self.motion_controller.move_z,  CONTINUOUS_STEPS, self.z_speed_bx))
+        self.zmm.pressed.connect(lambda: self._start_continuous(self.motion_controller.move_z, -CONTINUOUS_STEPS, self.z_speed_bx))
 
-        self.xpp.released.connect(self.stop_continuous)
-        self.xmm.released.connect(self.stop_continuous)
-        self.ypp.released.connect(self.stop_continuous)
-        self.ymm.released.connect(self.stop_continuous)
-        self.zpp.released.connect(self.stop_continuous)
-        self.zmm.released.connect(self.stop_continuous)
+        self.xpp.released.connect(self._stop_continuous)
+        self.xmm.released.connect(self._stop_continuous)
+        self.ypp.released.connect(self._stop_continuous)
+        self.ymm.released.connect(self._stop_continuous)
+        self.zpp.released.connect(self._stop_continuous)
+        self.zmm.released.connect(self._stop_continuous)
 
-        # other buttons
         self.saving_folder_3.clicked.connect(self.pick_saving_folder)
         self.saving_folder_4.clicked.connect(self.ai_check)
 
@@ -71,76 +65,78 @@ class ManualTab(QWidget):
         self.MController_status.setText("Connected")
 
 
+    ######## worker helper ########
+
+    def _run(self, fn):
+        self._current_worker = MotionWorker(fn)
+        self._current_worker.done.connect(self.show_coords)
+        self._current_worker.start()
+
+
     ######## continuous (held) motion ########
 
-    def start_continuous(self, move_fn, steps, speed_bx):
-        self.motion_controller.set_speed(speed_bx.value())
-        self.continuous_fn = lambda: move_fn(steps)
-        self.continuous_fn()                        # move immediately on first press
-        self.continuous_timer.start(CONTINUOUS_MS)
+    def _start_continuous(self, move_fn, steps, speed_bx):
+        mc    = self.motion_controller
+        speed = speed_bx.value()
+        self._continuous_active = True
+        self._continuous_fn = lambda: (mc.set_speed(speed), move_fn(steps))
+        self._fire_continuous()
 
-    def stop_continuous(self):
-        self.continuous_timer.stop()
-        self.continuous_fn = None
-        self.show_coords()
+    def _fire_continuous(self):
+        if not self._continuous_active:
+            return
+        self._current_worker = MotionWorker(self._continuous_fn)
+        self._current_worker.done.connect(self._on_continuous_done)
+        self._current_worker.start()
 
-    def continuous_move(self):
-        if self.continuous_fn:
-            self.continuous_fn()
+    def _on_continuous_done(self):
+        if self._continuous_active:
+            self._fire_continuous()
+        else:
+            self.show_coords()
+
+    def _stop_continuous(self):
+        self._continuous_active = False
 
 
-    ######## motion buttons ########
+    ######## single-step motion ########
 
     def xpf(self):
-        speed = self.x_speed_bx.value()
-        steps = self.x_angle_bx.value()
-        self.motion_controller.set_speed(speed)
-        self.motion_controller.move_x(steps)
-        self.show_coords()
+        mc = self.motion_controller
+        speed, steps = self.x_speed_bx.value(), self.x_angle_bx.value()
+        self._run(lambda: (mc.set_speed(speed), mc.move_x(steps)))
 
     def xmf(self):
-        speed = self.x_speed_bx.value()
-        steps = self.x_angle_bx.value()
-        self.motion_controller.set_speed(speed)
-        self.motion_controller.move_x(-steps)
-        self.show_coords()
+        mc = self.motion_controller
+        speed, steps = self.x_speed_bx.value(), self.x_angle_bx.value()
+        self._run(lambda: (mc.set_speed(speed), mc.move_x(-steps)))
 
     def ypf(self):
-        speed = self.y_speed_bx.value()
-        steps = self.y_angle_bx.value()
-        self.motion_controller.set_speed(speed)
-        self.motion_controller.move_y(steps)
-        self.show_coords()
+        mc = self.motion_controller
+        speed, steps = self.y_speed_bx.value(), self.y_angle_bx.value()
+        self._run(lambda: (mc.set_speed(speed), mc.move_y(steps)))
 
     def ymf(self):
-        speed = self.y_speed_bx.value()
-        steps = self.y_angle_bx.value()
-        self.motion_controller.set_speed(speed)
-        self.motion_controller.move_y(-steps)
-        self.show_coords()
+        mc = self.motion_controller
+        speed, steps = self.y_speed_bx.value(), self.y_angle_bx.value()
+        self._run(lambda: (mc.set_speed(speed), mc.move_y(-steps)))
 
     def zpf(self):
-        speed = self.z_speed_bx.value()
-        steps = self.z_angle_bx.value()
-        self.motion_controller.set_speed(speed)
-        self.motion_controller.move_z(steps)
-        self.show_coords()
+        mc = self.motion_controller
+        speed, steps = self.z_speed_bx.value(), self.z_angle_bx.value()
+        self._run(lambda: (mc.set_speed(speed), mc.move_z(steps)))
 
     def zmf(self):
-        speed = self.z_speed_bx.value()
-        steps = self.z_angle_bx.value()
-        self.motion_controller.set_speed(speed)
-        self.motion_controller.move_z(-steps)
-        self.show_coords()
+        mc = self.motion_controller
+        speed, steps = self.z_speed_bx.value(), self.z_angle_bx.value()
+        self._run(lambda: (mc.set_speed(speed), mc.move_z(-steps)))
 
     def show_coords(self):
-        x = self.motion_controller.get_x()
-        y = self.motion_controller.get_y()
-        z = self.motion_controller.get_z()
-        self.coord_display.setText(f"X: {x}, Y: {y}, Z: {z}")
+        mc = self.motion_controller
+        self.coord_display.setText(f"X: {mc.get_x()}, Y: {mc.get_y()}, Z: {mc.get_z()}")
 
 
-    ######## other buttons ########
+    ######## other ########
 
     def pick_saving_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Saving Folder")

@@ -1,10 +1,19 @@
-from PyQt5.QtCore import QPoint
-import pyautogui
-import numpy as np
+from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5 import QtTest
 import serial
 
-print("A")
+
+class MotionWorker(QThread):
+    """Run a motion function in a background thread so the GUI stays responsive."""
+    done = pyqtSignal()
+
+    def __init__(self, fn):
+        super().__init__()
+        self.fn = fn
+
+    def run(self):
+        self.fn()
+        self.done.emit()
 
 class MotionController:
     def __init__(self, com_port):
@@ -17,10 +26,12 @@ class MotionController:
         self.connect_device()
 
     def connect_device(self):
-        # connect to the arduino device
         try:
-            self.ser = serial.Serial(self.com_port, baudrate=2000000, timeout=1)
-            QtTest.QTest.qWait(2000)
+            # timeout=2 only during boot so reset_input_buffer doesn't hang
+            self.ser = serial.Serial(self.com_port, baudrate=2000000, timeout=2)
+            QtTest.QTest.qWait(2000)       # wait for Arduino to finish resetting
+            self.ser.reset_input_buffer()  # discard the "Ready." boot message
+            self.ser.timeout = None        # now block until each move ACK arrives
             return True
         except Exception as e:
             print(e)
