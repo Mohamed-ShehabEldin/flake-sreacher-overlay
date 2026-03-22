@@ -4,6 +4,7 @@ from PyQt5 import uic
 import os
 import cv2
 import time
+from collections import deque
 
 from motion_controller import MotionWorker
 
@@ -108,6 +109,7 @@ class ScanWorker(QThread):
                                               'fast_j': fast_j, 'x': x, 'y': y, 'z': z})
 
                 # save
+                # print("save all status: ", self.save_all, ", flake found status: ", flake_found)
                 if self.save_all or flake_found:
                     status = "yes" if flake_found else "no"
                     stem   = f"{x}_{y}_{z}_{status}_{flake_size}"
@@ -146,6 +148,9 @@ class AutoScan(QWidget):
         self.image_frame_manager = image_frame_manager
         self.a_eye_tab           = a_eye_tab
         self.worker              = None
+        self._workers            = []   # strong refs — prevent GC while thread runs
+        self._move_queue         = deque()
+        self._worker_busy        = False
 
         # defaults
         self.save_relevant_rad.setChecked(True)
@@ -203,9 +208,25 @@ class AutoScan(QWidget):
     # ── worker helper ───────────────────────────────────────────────────────
 
     def _run(self, fn):
-        self._current_worker = MotionWorker(fn)
-        self._current_worker.done.connect(self.show_coords)
-        self._current_worker.start()
+        self._move_queue.append(fn)
+        self._dispatch()
+
+    def _dispatch(self):
+        if self._worker_busy or not self._move_queue:
+            return
+        fn = self._move_queue.popleft()
+        self._worker_busy = True
+        worker = MotionWorker(fn)
+        self._workers.append(worker)
+        worker.done.connect(self._on_move_done)
+        worker.finished.connect(lambda w=worker: self._workers.remove(w) if w in self._workers else None)
+        self._current_worker = worker
+        worker.start()
+
+    def _on_move_done(self):
+        self._worker_busy = False
+        self.show_coords()
+        self._dispatch()
 
     # ── continuous ──────────────────────────────────────────────────────────
 
@@ -219,9 +240,12 @@ class AutoScan(QWidget):
     def _fire_continuous(self):
         if not self._continuous_active:
             return
-        self._current_worker = MotionWorker(self._continuous_fn)
-        self._current_worker.done.connect(self._on_continuous_done)
-        self._current_worker.start()
+        worker = MotionWorker(self._continuous_fn)
+        self._workers.append(worker)
+        worker.done.connect(self._on_continuous_done)
+        worker.finished.connect(lambda w=worker: self._workers.remove(w) if w in self._workers else None)
+        self._current_worker = worker
+        worker.start()
 
     def _on_continuous_done(self):
         if self._continuous_active:

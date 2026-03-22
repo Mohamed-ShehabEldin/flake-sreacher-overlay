@@ -104,7 +104,7 @@ python main.py
 | `manual_tab.py` | Manual control tab — single-step and press-and-hold jogging |
 | `training_ai_tab.py` | Train AI tab — collect data, set parameters, train and save a model |
 | `a_eye_tab.py` | A-Eye tab — load model, run inference on an image file or live screenshot |
-| `autoscan_tab.py` | Auto scan tab (in progress) |
+| `autoscan_tab.py` | Auto scan tab — serpentine grid scan with live AI inference and image saving |
 | `motion_controller.py` | Serial communication with Arduino (`move_x/y/z`, `set_speed`) |
 | `image_frame_manager.py` | Screenshot of the microscope view region via pyautogui |
 | `ai_logic.py` | `AutoScanPipeline` — collect, label, train, and test the flake detector |
@@ -117,7 +117,7 @@ python main.py
 ## Tabs
 
 ### Manual Tab
-- **Single-step buttons** (`xp`/`xm`/`yp`/`ym`/`zp`/`zm`): move one step at the configured angle and speed
+- **Single-step buttons** (`xp`/`xm`/`yp`/`ym`/`zp`/`zm`): move one step at the configured angle and speed; pressing multiple times while a move is in progress queues the extra moves — they execute one-by-one with a coordinate update after each
 - **Held buttons** (`xpp`/`xmm`/`ypp`/`ymm`/`zpp`/`zmm`): hold to jog continuously, release to stop
 - **Speed** and **step angle** are configurable in the tab UI
 - **Connect**: select COM port and click Connect before using
@@ -163,20 +163,43 @@ Configurable grid parameters:
 
 ---
 
+## Auto Scan Tab
+
+Runs a fully automated serpentine raster scan over the stage:
+
+1. Connect the motor from the **Manual** tab first
+2. Load a model in the **A-Eye** tab (optional — without a model all frames are saved)
+3. In the **Auto** tab:
+   - Set **fast axis** (X or Y) — the axis that sweeps quickly; the other steps between rows
+   - Set **step count** and **angle** for each axis, and speeds
+   - Choose **save mode**: save detected flakes only, or save all frames
+   - Pick a **save folder**
+   - Press **Start**
+
+Progress is shown live: current X/Y/Z coordinates and step counter (`Step 3/100  s=0 f=2  flake=YES (47pts)`).
+
+Saved filenames: `{x}_{y}_{z}_{yes/no}_{flake_size}.png` (auto-incremented if a file already exists).
+
+Manual jogging buttons are also available in this tab for positioning before a scan.
+
+---
+
 ## Current Status
 
 ### Done
 - [x] Arduino sketch for TB6600 + NEMA 17 — step/dir/enable pulse control
 - [x] Serial command protocol: `X {steps}`, `Y {steps}`, `S {delay_us}`
 - [x] `motion_controller.py` — connect, move_x/y/z, set_speed (rev/sec)
+- [x] Non-blocking motion: all serial calls run in `MotionWorker(QThread)` — GUI stays responsive
+- [x] Queue-based single-step motion — rapid presses queue up and execute one-by-one
+- [x] Continuous press-and-hold jogging via chained workers (hold to move, release to stop)
 - [x] Manual tab fully wired — single-step and press-and-hold continuous jogging
 - [x] Live position readout (X, Y, Z step counter)
 - [x] Transparent frameless overlay window (always on top)
 - [x] Training AI tab — full data collection, label, train, save workflow
 - [x] A-Eye tab — load model, check image file or live window, display annotated result
+- [x] Auto scan tab — serpentine grid scan with live AI inference, progress display, and image saving
 
 ### In Progress / Next
 - [ ] Test `check current window` on Windows (expected to work — Mac colour shift issue)
-- [ ] Wire `autoscan_tab.py` to `AutoScanPipeline` for real-time raster grid scanning
 - [ ] Add Z axis hardware
-- [ ] Serpentine raster scan with dwell + inference + save detections (PNG/JSON)

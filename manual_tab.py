@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QFileDialog
 from PyQt5 import uic
 import serial.tools.list_ports
 from PyQt5 import QtTest
+from collections import deque
 
 from motion_controller import MotionController, MotionWorker
 
@@ -16,6 +17,9 @@ class ManualTab(QWidget):
         self.motion_controller  = None
         self.saving_folder      = ""
         self._current_worker    = None
+        self._workers           = []   # strong refs — prevent GC while thread runs
+        self._move_queue        = deque()
+        self._worker_busy       = False
         self._continuous_active = False
         self._continuous_fn     = None
 
@@ -68,9 +72,25 @@ class ManualTab(QWidget):
     ######## worker helper ########
 
     def _run(self, fn):
-        self._current_worker = MotionWorker(fn)
-        self._current_worker.done.connect(self.show_coords)
-        self._current_worker.start()
+        self._move_queue.append(fn)
+        self._dispatch()
+
+    def _dispatch(self):
+        if self._worker_busy or not self._move_queue:
+            return
+        fn = self._move_queue.popleft()
+        self._worker_busy = True
+        worker = MotionWorker(fn)
+        self._workers.append(worker)
+        worker.done.connect(self._on_move_done)
+        worker.finished.connect(lambda w=worker: self._workers.remove(w) if w in self._workers else None)
+        self._current_worker = worker
+        worker.start()
+
+    def _on_move_done(self):
+        self._worker_busy = False
+        self.show_coords()
+        self._dispatch()
 
 
     ######## continuous (held) motion ########
@@ -85,9 +105,12 @@ class ManualTab(QWidget):
     def _fire_continuous(self):
         if not self._continuous_active:
             return
-        self._current_worker = MotionWorker(self._continuous_fn)
-        self._current_worker.done.connect(self._on_continuous_done)
-        self._current_worker.start()
+        worker = MotionWorker(self._continuous_fn)
+        self._workers.append(worker)
+        worker.done.connect(self._on_continuous_done)
+        worker.finished.connect(lambda w=worker: self._workers.remove(w) if w in self._workers else None)
+        self._current_worker = worker
+        worker.start()
 
     def _on_continuous_done(self):
         if self._continuous_active:
