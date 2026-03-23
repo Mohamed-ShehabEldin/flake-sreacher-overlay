@@ -34,8 +34,7 @@ env/
 # SAM2 repo (nested git — clone separately from github.com/facebookresearch/segment-anything-2)
 ai/auto_scan_v1/sam2_repo/
 
-# Model weights (large files)
-*.h5
+# Model weights (large files — .h5 models are small so they are tracked)
 *.pt
 *.pth
 *.ckpt
