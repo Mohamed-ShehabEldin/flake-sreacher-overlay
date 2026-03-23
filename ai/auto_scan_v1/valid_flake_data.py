@@ -73,7 +73,11 @@ def valid_flake_data(folder=None, save_dir=None):
         zoom_center = None
         display_image = get_display_image()
         cv2.imshow("Image", display_image)
-       
+        h, w = original_image.shape[:2]
+        win_w = min(w, 1400)
+        win_h = int(h * win_w / w)
+        cv2.resizeWindow("Image", win_w, win_h)
+
 
 
     def mouse_callback(event, x, y, flags, param):
@@ -83,7 +87,7 @@ def valid_flake_data(folder=None, save_dir=None):
             cv2.circle(display_image, (x, y), 5, (0, 255, 0), -1)
             cv2.imshow("Image", display_image)
 
-    cv2.namedWindow("Image")
+    cv2.namedWindow("Image", cv2.WINDOW_NORMAL)
     cv2.setMouseCallback("Image", mouse_callback)
     load_image(current_image_index)
 

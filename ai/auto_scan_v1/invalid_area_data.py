@@ -79,7 +79,7 @@ def invalid_area_data(folder=None, save_dir=None, checkpoint=None, max_display_w
         display_image = draw_overlay(display_base, fname)
         cv2.imshow("Image", display_image)
 
-    cv2.namedWindow("Image")
+    cv2.namedWindow("Image", cv2.WINDOW_NORMAL)
 
     def on_mouse(evt, x, y, flags, _):
         nonlocal current_clicks, display_image
