@@ -111,8 +111,7 @@ class ScanWorker(QThread):
                 # save
                 # print("save all status: ", self.save_all, ", flake found status: ", flake_found)
                 if self.save_all or flake_found:
-                    status = "yes" if flake_found else "no"
-                    stem   = f"{x}_{y}_{z}_{status}_{flake_size}"
+                    stem   = f"s{flake_size:03d}_x{x}_y{y}_z{z}"
                     path   = _unique_path(self.save_folder, stem)
                     cv2.imwrite(path, bgr)
 

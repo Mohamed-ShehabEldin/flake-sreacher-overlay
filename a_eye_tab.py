@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QFileDialog
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtWidgets import QWidget, QFileDialog, QDialog, QLabel, QScrollArea, QVBoxLayout
+from PyQt5.QtCore import QThread, pyqtSignal, QEvent
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QGraphicsScene
 from PyQt5 import uic
@@ -43,6 +43,9 @@ class A_Eye_Tab(QWidget):
         self.pipeline = AutoScanPipeline.__new__(AutoScanPipeline)
         self.pipeline._model = None
         self.worker = None
+        self._last_pixmap = None
+
+        self.graphicsView.viewport().installEventFilter(self)
 
         self.ratio_spin.setToolTip("Grid density: one sample point every N pixels. Lower = more points, slower.")
         self.pred_batch_size_spin.setToolTip("Number of grid points sent to the model at once. Higher = faster (if GPU memory allows).")
@@ -51,6 +54,27 @@ class A_Eye_Tab(QWidget):
         self.chose_model_btn.clicked.connect(self.load_model)
         self.check_an_img_btn.clicked.connect(self.check_image)
         self.check_current_win_btn.clicked.connect(self.check_current_window)
+
+    def eventFilter(self, obj, event):
+        if obj is self.graphicsView.viewport() and event.type() == QEvent.MouseButtonDblClick:
+            self._open_fullsize()
+        return super().eventFilter(obj, event)
+
+    def _open_fullsize(self):
+        if self._last_pixmap is None:
+            return
+        dlg = QDialog(self)
+        dlg.setWindowTitle("A-Eye Result — full size")
+        dlg.resize(900, 700)
+        label = QLabel()
+        label.setPixmap(self._last_pixmap)
+        scroll = QScrollArea()
+        scroll.setWidget(label)
+        scroll.setWidgetResizable(False)
+        layout = QVBoxLayout()
+        layout.addWidget(scroll)
+        dlg.setLayout(layout)
+        dlg.show()
 
     def load_model(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select model", "", "Model (*.h5)")
@@ -98,6 +122,8 @@ class A_Eye_Tab(QWidget):
         rgb = cv2.cvtColor(img_disp, cv2.COLOR_BGR2RGB)
         qimg = QImage(rgb.data, w, h, 3 * w, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(qimg)
+
+        self._last_pixmap = pixmap
 
         scene = QGraphicsScene()
         scene.addPixmap(pixmap)
