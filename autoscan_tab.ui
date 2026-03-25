@@ -621,7 +621,7 @@
    <widget class="QGroupBox" name="fast_axis_grp">
     <property name="geometry">
      <rect>
-      <x>60</x>
+      <x>20</x>
       <y>340</y>
       <width>120</width>
       <height>61</height>
@@ -707,6 +707,19 @@
     </property>
     <property name="text">
      <string>scan info</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="zigizag_chkbx">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>360</y>
+      <width>87</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>ZigZag</string>
     </property>
    </widget>
   </widget>
