@@ -125,7 +125,7 @@
      <double>0.010000000000000</double>
     </property>
     <property name="value">
-     <double>1.000000000000000</double>
+     <double>0.400000000000000</double>
     </property>
    </widget>
    <widget class="QPushButton" name="zm">
@@ -173,7 +173,7 @@
      <double>0.010000000000000</double>
     </property>
     <property name="value">
-     <double>1.000000000000000</double>
+     <double>0.400000000000000</double>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="y_speed_bx">
@@ -198,7 +198,7 @@
      <double>0.010000000000000</double>
     </property>
     <property name="value">
-     <double>1.000000000000000</double>
+     <double>0.400000000000000</double>
     </property>
    </widget>
    <widget class="QPushButton" name="yp">
@@ -337,11 +337,14 @@
     <property name="minimum">
      <double>-10000000.000000000000000</double>
     </property>
+    <property name="maximum">
+     <double>10000000000.000000000000000</double>
+    </property>
     <property name="singleStep">
      <double>0.010000000000000</double>
     </property>
     <property name="value">
-     <double>1.000000000000000</double>
+     <double>1000.000000000000000</double>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="x_angle_bx">
@@ -366,7 +369,7 @@
      <double>0.010000000000000</double>
     </property>
     <property name="value">
-     <double>1.000000000000000</double>
+     <double>1000.000000000000000</double>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="y_angle_bx">
@@ -391,7 +394,7 @@
      <double>0.010000000000000</double>
     </property>
     <property name="value">
-     <double>1.000000000000000</double>
+     <double>1000.000000000000000</double>
     </property>
    </widget>
    <widget class="QLabel" name="label_23">
@@ -506,7 +509,7 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>380</y>
+      <y>420</y>
       <width>81</width>
       <height>21</height>
      </rect>
@@ -519,7 +522,7 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>410</y>
+      <y>450</y>
       <width>81</width>
       <height>21</height>
      </rect>
@@ -532,7 +535,7 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>440</y>
+      <y>480</y>
       <width>81</width>
       <height>21</height>
      </rect>
@@ -545,7 +548,7 @@
     <property name="geometry">
      <rect>
       <x>120</x>
-      <y>380</y>
+      <y>420</y>
       <width>81</width>
       <height>24</height>
      </rect>
@@ -570,7 +573,7 @@
     <property name="geometry">
      <rect>
       <x>120</x>
-      <y>410</y>
+      <y>450</y>
       <width>81</width>
       <height>24</height>
      </rect>
@@ -595,7 +598,7 @@
     <property name="geometry">
      <rect>
       <x>120</x>
-      <y>440</y>
+      <y>480</y>
       <width>81</width>
       <height>24</height>
      </rect>
@@ -614,6 +617,19 @@
     </property>
     <property name="value">
      <double>1.000000000000000</double>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="arrows_ctrl_chkBx">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>360</y>
+      <width>161</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>control with arrows</string>
     </property>
    </widget>
   </widget>

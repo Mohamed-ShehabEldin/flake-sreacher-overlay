@@ -239,6 +239,10 @@ class AutoScan(QWidget):
     def _fire_continuous(self):
         if not self._continuous_active:
             return
+        mc = self.mc()
+        if mc is None or mc.ser is None:
+            self._continuous_active = False
+            return
         worker = MotionWorker(self._continuous_fn)
         self._workers.append(worker)
         worker.done.connect(self._on_continuous_done)

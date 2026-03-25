@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QFileDialog
+from PyQt5.QtCore import Qt
 from PyQt5 import uic
 import serial.tools.list_ports
 from PyQt5 import QtTest
@@ -21,6 +22,8 @@ class ManualTab(QWidget):
         self._worker_busy       = False
         self._continuous_active = False
         self._continuous_fn     = None
+        self._held_keys         = set()
+        self._arrows_running    = False
 
         ports = [port.device for port in serial.tools.list_ports.comports()]
         self.combo_connect_M.addItems(ports)
@@ -54,8 +57,75 @@ class ManualTab(QWidget):
         self.move_to_y_btn.clicked.connect(self.move_to_y)
         self.move_to_z_btn.clicked.connect(self.move_to_z)
 
+        self.setFocusPolicy(Qt.StrongFocus)
+
         QtTest.QTest.qWait(200)
 
+
+    ######## arrow key control ########
+
+    def keyPressEvent(self, event):
+        if not self.arrows_ctrl_chkBx.isChecked() or event.isAutoRepeat():
+            return super().keyPressEvent(event)
+        if self.motion_controller is None:
+            return super().keyPressEvent(event)
+        key = event.key()
+        if key in (Qt.Key_Right, Qt.Key_Left, Qt.Key_Up, Qt.Key_Down):
+            self._held_keys.add(key)
+            if not self._arrows_running:
+                self._arrows_running = True
+                self._fire_arrows()
+        else:
+            super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if not self.arrows_ctrl_chkBx.isChecked() or event.isAutoRepeat():
+            return super().keyReleaseEvent(event)
+        key = event.key()
+        if key in (Qt.Key_Right, Qt.Key_Left, Qt.Key_Up, Qt.Key_Down):
+            self._held_keys.discard(key)
+            if not self._held_keys:
+                self._arrows_running = False
+        else:
+            super().keyReleaseEvent(event)
+
+    def _arrow_fn(self):
+        mc = self.motion_controller
+        if mc is None or mc.ser is None:
+            return
+        x_steps = 0
+        y_steps = 0
+        if Qt.Key_Right in self._held_keys: x_steps += CONTINUOUS_STEPS
+        if Qt.Key_Left  in self._held_keys: x_steps -= CONTINUOUS_STEPS
+        if Qt.Key_Up    in self._held_keys: y_steps += CONTINUOUS_STEPS
+        if Qt.Key_Down  in self._held_keys: y_steps -= CONTINUOUS_STEPS
+        if x_steps != 0:
+            mc.set_speed(self.x_speed_bx.value())
+            mc.move_x(x_steps)
+        if y_steps != 0:
+            mc.set_speed(self.y_speed_bx.value())
+            mc.move_y(y_steps)
+
+    def _fire_arrows(self):
+        if not self._arrows_running or not self._held_keys:
+            self._arrows_running = False
+            return
+        mc = self.motion_controller
+        if mc is None or mc.ser is None:
+            self._arrows_running = False
+            return
+        worker = MotionWorker(self._arrow_fn)
+        self._workers.append(worker)
+        worker.done.connect(self._on_arrows_done)
+        worker.finished.connect(lambda w=worker: self._workers.remove(w) if w in self._workers else None)
+        worker.start()
+
+    def _on_arrows_done(self):
+        if self._arrows_running and self._held_keys:
+            self._fire_arrows()
+        else:
+            self._arrows_running = False
+            self.show_coords()
 
     ######## connection ########
 
@@ -105,6 +175,9 @@ class ManualTab(QWidget):
 
     def _fire_continuous(self):
         if not self._continuous_active:
+            return
+        if self.motion_controller is None or self.motion_controller.ser is None:
+            self._continuous_active = False
             return
         worker = MotionWorker(self._continuous_fn)
         self._workers.append(worker)

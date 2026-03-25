@@ -8,7 +8,7 @@ class ImageFrameManager:
         self.image_frame = image_frame
 
     def get_screenshot(self):
-        trim = 4
+        trim = 15
         top_left = self.image_frame.mapToGlobal(QPoint(0, 0))
         x = top_left.x() + trim
         y = top_left.y() + trim

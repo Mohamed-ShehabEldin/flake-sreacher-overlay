@@ -12,7 +12,10 @@ class MotionWorker(QThread):
         self.fn = fn
 
     def run(self):
-        self.fn()
+        try:
+            self.fn()
+        except Exception as e:
+            print(f"[MotionWorker] {e}")
         self.done.emit()
 
 class MotionController:
@@ -37,41 +40,49 @@ class MotionController:
             print(e)
             return False
         
+    def _serial_error(self, e):
+        print(f"[MC] Serial disconnected: {e}")
+        try:
+            self.ser.close()
+        except Exception:
+            pass
+        self.ser = None
+
     def move_x(self, step=1, speed=100):
-        '''Move the X axis (NEMA 17 via TB6600).
-        step: Number of steps (positive = forward, negative = backward).'''
         if self.ser:
-            command = f'X {step}\n'.encode()
-            self.ser.write(command)
-            self.ser.readline()  # wait for Arduino acknowledgment
-            self.absolute_x += step
+            try:
+                self.ser.write(f'X {step}\n'.encode())
+                self.ser.readline()
+                self.absolute_x += step
+            except Exception as e:
+                self._serial_error(e)
 
     def move_y(self, step=1, speed=100):
-        '''Move the Y axis (NEMA 17 via TB6600).
-        step: Number of steps (positive = forward, negative = backward).'''
         if self.ser:
-            command = f'Y {step}\n'.encode()
-            self.ser.write(command)
-            self.ser.readline()  # wait for Arduino acknowledgment
-            self.absolute_y += step
+            try:
+                self.ser.write(f'Y {step}\n'.encode())
+                self.ser.readline()
+                self.absolute_y += step
+            except Exception as e:
+                self._serial_error(e)
 
     def move_z(self, step=1, speed=100):
-        '''Move the Z axis (small stepper, TBD).
-        step: Number of steps (positive = forward, negative = backward).'''
         if self.ser:
-            command = f'Z {step}\n'.encode()
-            self.ser.write(command)
-            self.ser.readline()  # wait for Arduino acknowledgment
-            self.absolute_z += step
+            try:
+                self.ser.write(f'Z {step}\n'.encode())
+                self.ser.readline()
+                self.absolute_z += step
+            except Exception as e:
+                self._serial_error(e)
 
     def set_speed(self, revs_per_sec):
-        '''Set motor speed. Converts rev/sec to Arduino stepDelay (µs).
-        revs_per_sec: desired speed (e.g. 1.0 = 1 rev/sec, max ~5 rev/sec).'''
         if self.ser and revs_per_sec > 0:
-            step_delay = int(1_000_000 / (2 * revs_per_sec * 6400))
-            command = f'S {step_delay}\n'.encode()
-            self.ser.write(command)
-            self.ser.readline()
+            try:
+                step_delay = int(1_000_000 / (2 * revs_per_sec * 6400))
+                self.ser.write(f'S {step_delay}\n'.encode())
+                self.ser.readline()
+            except Exception as e:
+                self._serial_error(e)
 
     def get_x(self):
         return self.absolute_x

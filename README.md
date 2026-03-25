@@ -127,6 +127,7 @@ python main.py
 ### Manual Tab
 - **Single-step buttons** (`xp`/`xm`/`yp`/`ym`/`zp`/`zm`): move one step at the configured angle and speed; pressing multiple times while a move is in progress queues the extra moves — they execute one-by-one with a coordinate update after each
 - **Held buttons** (`xpp`/`xmm`/`ypp`/`ymm`/`zpp`/`zmm`): hold to jog continuously, release to stop
+- **Arrow keys**: tick the `arrows_ctrl_chkBx` checkbox to enable keyboard jogging — hold any arrow key to move, combine two keys (e.g. Right+Up) for diagonal motion; only one serial command runs at a time so the port is never overloaded
 - **Speed** and **step angle** are configurable in the tab UI
 - **Connect**: select COM port and click Connect before using — on Windows ports appear as `COM3`, `COM4` etc.; on Mac as `/dev/cu.usbserial-XXXX`
 - **Move to**: enter an absolute step position in the spin box next to `move_to_x/y/z` and click the button — the stage moves the exact difference from its current position
@@ -202,6 +203,8 @@ Manual jogging buttons are also available in this tab for positioning before a s
 - [x] Non-blocking motion: all serial calls run in `MotionWorker(QThread)` — GUI stays responsive
 - [x] Queue-based single-step motion — rapid presses queue up and execute one-by-one
 - [x] Continuous press-and-hold jogging via chained workers (hold to move, release to stop)
+- [x] Arrow key jogging with diagonal support — single serial chain reads held-key set each iteration
+- [x] Serial disconnect handled gracefully — GUI stays open, motion stops cleanly
 - [x] Manual tab fully wired — single-step and press-and-hold continuous jogging
 - [x] Live position readout (X, Y, Z step counter)
 - [x] Transparent frameless overlay window (always on top)
