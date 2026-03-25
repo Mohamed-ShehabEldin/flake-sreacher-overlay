@@ -188,7 +188,15 @@ Runs a fully automated serpentine raster scan over the stage:
 
 Progress is shown live: current X/Y/Z coordinates and step counter (`Step 3/100  s=0 f=2  flake=YES (47pts)`).
 
-Saved filenames: `{x}_{y}_{z}_{yes/no}_{flake_size}.png` (auto-incremented if a file already exists).
+Saved filenames: `s{flake_size}_x{x}_y{y}_z{z}.png` (auto-incremented if a file already exists).
+
+**Scan modes:**
+| Mode | Behaviour |
+|------|-----------|
+| Normal | Fast axis always moves in the same direction; after each row it returns to the start column before stepping the slow axis |
+| Zigzag | Fast axis alternates direction each row — no return trip, faster overall scan |
+
+In both modes the **first frame is captured at exactly the position where you pressed Start** — no pre-move.
 
 Manual jogging buttons are also available in this tab for positioning before a scan.
 

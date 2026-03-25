@@ -31,7 +31,7 @@ class ScanWorker(QThread):
                  fast_axis, fast_n, fast_angle, fast_speed,
                  slow_n, slow_angle, slow_speed,
                  save_all, save_folder,
-                 ratio, batch_size, radius):
+                 ratio, batch_size, radius, zigzag):
         super().__init__()
         self.mc                  = mc
         self.image_frame_manager = image_frame_manager
@@ -48,10 +48,25 @@ class ScanWorker(QThread):
         self.ratio               = ratio
         self.batch_size          = batch_size
         self.radius              = radius
+        self.zigzag              = zigzag
         self._stop               = False
 
     def stop(self):
         self._stop = True
+
+    def _move_fast(self, mc, steps):
+        mc.set_speed(self.fast_speed)
+        if self.fast_axis == 'x':
+            mc.move_x(steps)
+        else:
+            mc.move_y(steps)
+
+    def _move_slow(self, mc):
+        mc.set_speed(self.slow_speed)
+        if self.fast_axis == 'x':
+            mc.move_y(self.slow_angle)
+        else:
+            mc.move_x(self.slow_angle)
 
     def run(self):
         mc    = self.mc
@@ -62,25 +77,16 @@ class ScanWorker(QThread):
             if self._stop:
                 break
 
-            direction = 1 if slow_i % 2 == 0 else -1   # serpentine
+            direction = 1 if (not self.zigzag or slow_i % 2 == 0) else -1
 
             for fast_j in range(self.fast_n):
                 if self._stop:
                     break
 
-                # move fast axis
-                if self.fast_axis == 'x':
-                    mc.set_speed(self.fast_speed)
-                    mc.move_x(direction * self.fast_angle)
-                else:
-                    mc.set_speed(self.fast_speed)
-                    mc.move_y(direction * self.fast_angle)
-
+                # screenshot at current position first (no pre-move)
                 time.sleep(SETTLE_S)
-
                 x, y, z = mc.get_x(), mc.get_y(), mc.get_z()
 
-                # screenshot
                 try:
                     rgb = self.image_frame_manager.get_screenshot()
                     bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
@@ -88,6 +94,9 @@ class ScanWorker(QThread):
                     self.step_done.emit({'error': str(e), 'done': done, 'total': total,
                                          'slow_i': slow_i, 'fast_j': fast_j,
                                          'x': x, 'y': y, 'z': z})
+                    done += 1
+                    if fast_j < self.fast_n - 1:
+                        self._move_fast(mc, direction * self.fast_angle)
                     continue
 
                 # AI inference — always run if model is loaded (to get flake_size)
@@ -108,11 +117,9 @@ class ScanWorker(QThread):
                                               'total': total, 'slow_i': slow_i,
                                               'fast_j': fast_j, 'x': x, 'y': y, 'z': z})
 
-                # save
-                # print("save all status: ", self.save_all, ", flake found status: ", flake_found)
                 if self.save_all or flake_found:
-                    stem   = f"s{flake_size:03d}_x{x}_y{y}_z{z}"
-                    path   = _unique_path(self.save_folder, stem)
+                    stem = f"s{flake_size:03d}_x{x}_y{y}_z{z}"
+                    path = _unique_path(self.save_folder, stem)
                     cv2.imwrite(path, bgr)
 
                 done += 1
@@ -123,17 +130,18 @@ class ScanWorker(QThread):
                     'flake_found': flake_found, 'flake_size': flake_size,
                 })
 
+                # move to next position (not after the last frame in the row)
+                if fast_j < self.fast_n - 1:
+                    self._move_fast(mc, direction * self.fast_angle)
+
             if self._stop:
                 break
 
-            # move slow axis (skip after the last row)
             if slow_i < self.slow_n - 1:
-                if self.fast_axis == 'x':
-                    mc.set_speed(self.slow_speed)
-                    mc.move_y(self.slow_angle)
-                else:
-                    mc.set_speed(self.slow_speed)
-                    mc.move_x(self.slow_angle)
+                self._move_slow(mc)
+                if not self.zigzag:
+                    # return fast axis to row start
+                    self._move_fast(mc, -(self.fast_n - 1) * self.fast_angle)
 
         self.finished.emit()
 
@@ -341,12 +349,14 @@ class AutoScan(QWidget):
         batch_size = self.a_eye_tab.pred_batch_size_spin.value()
         radius     = self.a_eye_tab.radius_spin.value()
 
+        zigzag = self.zigizag_chkbx.isChecked()
+
         self.worker = ScanWorker(
             self.mc(), self.image_frame_manager, self.a_eye_tab.pipeline,
             fast_axis, fast_n, fast_angle, fast_speed,
             slow_n, slow_angle, slow_speed,
             save_all, save_folder,
-            ratio, batch_size, radius,
+            ratio, batch_size, radius, zigzag,
         )
         self.worker.step_done.connect(self.on_step_done)
         self.worker.finished.connect(self.on_finished)
