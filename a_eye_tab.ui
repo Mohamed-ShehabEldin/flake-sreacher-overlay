@@ -160,7 +160,7 @@
    <widget class="QPushButton" name="check_current_win_btn">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>50</x>
       <y>320</y>
       <width>141</width>
       <height>32</height>
@@ -173,8 +173,8 @@
    <widget class="QPushButton" name="check_an_img_btn">
     <property name="geometry">
      <rect>
-      <x>150</x>
-      <y>320</y>
+      <x>10</x>
+      <y>280</y>
       <width>101</width>
       <height>32</height>
      </rect>
@@ -197,13 +197,26 @@
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>260</y>
+      <y>200</y>
       <width>141</width>
       <height>51</height>
      </rect>
     </property>
     <property name="text">
      <string>info</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="check_fldr_btn">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>280</y>
+      <width>101</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>check a folder</string>
     </property>
    </widget>
   </widget>

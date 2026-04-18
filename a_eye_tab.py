@@ -4,6 +4,8 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QGraphicsScene
 from PyQt5 import uic
 import cv2
+import os
+import shutil
 
 from ai_logic import AutoScanPipeline
 from image_frame_manager import ImageFrameManager
@@ -34,6 +36,60 @@ class InferenceWorker(QThread):
             self.error.emit(str(e))
 
 
+class FolderInferenceWorker(QThread):
+    done = pyqtSignal(str)
+    error = pyqtSignal(str)
+
+    def __init__(self, pipeline, folder, ratio, batch_size, radius):
+        super().__init__()
+        self.pipeline   = pipeline
+        self.folder     = folder
+        self.ratio      = ratio
+        self.batch_size = batch_size
+        self.radius     = radius
+
+    def run(self):
+        try:
+            output_folder = os.path.join(self.folder, "a_eye_results")
+            os.makedirs(output_folder, exist_ok=True)
+
+            total_files = 0
+            saved_files = 0
+
+            for name in os.listdir(self.folder):
+                path = os.path.join(self.folder, name)
+                if not os.path.isfile(path):
+                    continue
+
+                img = cv2.imread(path)
+                if img is None:
+                    continue
+
+                total_files += 1
+
+                _, _, stats = self.pipeline.test(
+                    path,
+                    ratio=self.ratio,
+                    batch_size=self.batch_size,
+                    radius=self.radius,
+                )
+
+                flake_size = stats['filtered']
+                if flake_size <= 0:
+                    continue
+
+                new_name = f"s{flake_size:03d}_{name}"
+                save_path = os.path.join(output_folder, new_name)
+                shutil.copy2(path, save_path)
+                saved_files += 1
+
+            self.done.emit(
+                f"Folder done. checked: {total_files}  saved: {saved_files}  folder: {output_folder}"
+            )
+        except Exception as e:
+            self.error.emit(str(e))
+
+
 class A_Eye_Tab(QWidget):
     def __init__(self, image_frame_manager: ImageFrameManager):
         super().__init__()
@@ -54,6 +110,7 @@ class A_Eye_Tab(QWidget):
         self.chose_model_btn.clicked.connect(self.load_model)
         self.check_an_img_btn.clicked.connect(self.check_image)
         self.check_current_win_btn.clicked.connect(self.check_current_window)
+        self.check_fldr_btn.clicked.connect(self.check_folder)
 
     def eventFilter(self, obj, event):
         if obj is self.graphicsView.viewport() and event.type() == QEvent.MouseButtonDblClick:
@@ -109,6 +166,22 @@ class A_Eye_Tab(QWidget):
         if path:
             self._run_inference(path)
 
+    def check_folder(self):
+        if self.pipeline._model is None:
+            print("[A-Eye] Please load a model first.")
+            return
+
+        folder = QFileDialog.getExistingDirectory(self, "Select folder")
+        if not folder:
+            return
+
+        ratio, batch_size, radius = self._get_params()
+        self.worker = FolderInferenceWorker(self.pipeline, folder, ratio, batch_size, radius)
+        self.info.setText("Checking folder...")
+        self.worker.done.connect(self._on_folder_done)
+        self.worker.error.connect(self._on_folder_error)
+        self.worker.start()
+
     def check_current_window(self):
         try:
             rgb = self.image_frame_manager.get_screenshot()
@@ -138,6 +211,14 @@ class A_Eye_Tab(QWidget):
         )
         self.info.setText(info_text)
         print(f"[A-Eye] {info_text}")
+
+    def _on_folder_done(self, msg):
+        self.info.setText(msg)
+        print(f"[A-Eye] {msg}")
+
+    def _on_folder_error(self, msg):
+        self.info.setText("Folder check failed.")
+        print(f"[A-Eye] Error: {msg}")
 
 
 if __name__ == "__main__":
