@@ -9,7 +9,7 @@ A transparent PyQt5 overlay for a manual microscope. It sits on top of the micro
 ## Hardware Setup
 
 - **Arduino Nano** + **2x TB6600 stepper driver** + **2x NEMA 17** (X and Y axes)
-- Z axis: small stepper (planned)
+- Z axis: small stepper (planned); Z controls are disabled until the firmware implements it
 - Serial baud rate: **2,000,000**
 
 | Axis | ENA+ | DIR+ | PUL+ |
@@ -125,12 +125,15 @@ python main.py
 ## Tabs
 
 ### Manual Tab
-- **Single-step buttons** (`xp`/`xm`/`yp`/`ym`/`zp`/`zm`): move one step at the configured angle and speed; pressing multiple times while a move is in progress queues the extra moves — they execute one-by-one with a coordinate update after each
-- **Held buttons** (`xpp`/`xmm`/`ypp`/`ymm`/`zpp`/`zmm`): hold to jog continuously, release to stop
-- **Arrow keys**: tick the `arrows_ctrl_chkBx` checkbox to enable keyboard jogging — hold any arrow key to move, combine two keys (e.g. Right+Up) for diagonal motion; only one serial command runs at a time so the port is never overloaded
+- **Single-step buttons** (`xp`/`xm`/`yp`/`ym`): move one integer motor-step count at the configured speed; pressing multiple times while a move is in progress queues the extra moves
+- **Held buttons** (`xpp`/`xmm`/`ypp`/`ymm`): hold to jog continuously, release to stop
+- **Arrow keys**: tick the `arrows_ctrl_chkBx` checkbox to enable keyboard jogging — hold any arrow key to move, combine two keys (e.g. Right+Up) for diagonal motion
 - **Speed** and **step angle** are configurable in the tab UI
 - **Connect**: select COM port and click Connect before using — on Windows ports appear as `COM3`, `COM4` etc.; on Mac as `/dev/cu.usbserial-XXXX`
-- **Move to**: enter an absolute step position in the spin box next to `move_to_x/y/z` and click the button — the stage moves the exact difference from its current position
+- **Move to**: enter an absolute integer step position for X or Y and click the button — the stage moves the exact difference from its current software position
+- The speed command and its X/Y movement command are sent as one serialized transaction. Coordinates advance only after the exact firmware acknowledgement is received.
+- A timeout, malformed acknowledgement, disconnect, or serial error marks X/Y as **POSITION UNKNOWN**. Reconnect before issuing more motion.
+- Z movement and move-to controls are intentionally disabled because the current firmware has no Z command.
 
 ### Train AI Tab
 Lets you build a new model for a new material or microscope setup:
@@ -199,6 +202,7 @@ Saved filenames: `s{flake_size}_x{x}_y{y}_z{z}.png` (auto-incremented if a file 
 In both modes the **first frame is captured at exactly the position where you pressed Start** — no pre-move.
 
 Manual jogging buttons are also available in this tab for positioning before a scan.
+Manual-tab and Auto-tab jogging are disabled while a scan owns the stage. **Stop** remains available and takes effect after the current capture, inference, or physical move completes. The Manual-tab connection button becomes a safety **Disconnect** action during a scan.
 
 ---
 
@@ -207,14 +211,15 @@ Manual jogging buttons are also available in this tab for positioning before a s
 ### Done
 - [x] Arduino sketch for TB6600 + NEMA 17 — step/dir/enable pulse control
 - [x] Serial command protocol: `X {steps}`, `Y {steps}`, `S {delay_us}`
-- [x] `motion_controller.py` — connect, move_x/y/z, set_speed (rev/sec)
-- [x] Non-blocking motion: all serial calls run in `MotionWorker(QThread)` — GUI stays responsive
+- [x] `motion_controller.py` — connect, validated move_x/y, set_speed (rev/sec)
+- [x] Non-blocking motion: movement serial calls run in workers so the GUI stays responsive
+- [x] Serialized speed-plus-move transactions with strict acknowledgement validation and finite timeouts
 - [x] Queue-based single-step motion — rapid presses queue up and execute one-by-one
 - [x] Continuous press-and-hold jogging via chained workers (hold to move, release to stop)
 - [x] Arrow key jogging with diagonal support — single serial chain reads held-key set each iteration
-- [x] Serial disconnect handled gracefully — GUI stays open, motion stops cleanly
+- [x] Serial failures invalidate software position and abort Auto Scan visibly
 - [x] Manual tab fully wired — single-step and press-and-hold continuous jogging
-- [x] Live position readout (X, Y, Z step counter)
+- [x] Live X/Y software-position readout; Z remains unavailable
 - [x] Transparent frameless overlay window (always on top)
 - [x] Training AI tab — full data collection, label, train, save workflow
 - [x] A-Eye tab — load model, check image file or live window, display annotated result
@@ -222,4 +227,4 @@ Manual jogging buttons are also available in this tab for positioning before a s
 
 ### In Progress / Next
 - [ ] Test `check current window` on Windows (expected to work — Mac colour shift issue)
-- [ ] Add Z axis hardware
+- [ ] Add matching Z-axis hardware and firmware, then enable the disabled Z controls
