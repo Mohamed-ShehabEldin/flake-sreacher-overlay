@@ -9,7 +9,7 @@ A transparent PyQt5 overlay for a manual microscope. It sits on top of the micro
 ## Hardware Setup
 
 - **Arduino Nano** + **2x TB6600 stepper driver** + **2x NEMA 17** (X and Y axes)
-- Z axis: small stepper (planned); Z controls are disabled until the firmware implements it
+- Z axis: small stepper (planned); controller capabilities keep Z controls disabled until the firmware implements it
 - Serial baud rate: **2,000,000**
 
 | Axis | ENA+ | DIR+ | PUL+ |
@@ -133,7 +133,7 @@ python main.py
 - **Move to**: enter an absolute integer step position for X or Y and click the button — the stage moves the exact difference from its current software position
 - The speed command and its X/Y movement command are sent as one serialized transaction. Coordinates advance only after the exact firmware acknowledgement is received.
 - A timeout, malformed acknowledgement, disconnect, or serial error marks X/Y as **POSITION UNKNOWN**. Reconnect before issuing more motion.
-- Z movement and move-to controls are intentionally disabled because the current firmware has no Z command.
+- Z movement and move-to controls follow the controller's centrally defined axis capabilities; the current X/Y firmware reports no Z capability, so no Z command can be sent.
 
 ### Train AI Tab
 Lets you build a new model for a new material or microscope setup:

@@ -6,7 +6,7 @@ import cv2
 import time
 from collections import deque
 
-from motion_controller import MotionError, MotionWorker
+from motion_controller import MotionController, MotionError, MotionWorker
 
 CONTINUOUS_STEPS = 100
 CONTINUOUS_MS    = 50
@@ -212,7 +212,19 @@ class AutoScan(QWidget):
 
     def _controller_ready(self):
         mc = self.mc()
-        return mc is not None and mc.is_connected() and mc.is_position_valid()
+        return (
+            mc is not None
+            and mc.is_connected()
+            and mc.is_position_valid()
+            and mc.supports_axis('X')
+            and mc.supports_axis('Y')
+        )
+
+    def _supports_axis(self, axis):
+        mc = self.mc()
+        if mc is not None:
+            return mc.supports_axis(axis)
+        return MotionController.DEFAULT_CAPABILITIES.supports_axis(axis)
 
     def _require_controller(self):
         if not self._controller_ready():
@@ -374,11 +386,14 @@ class AutoScan(QWidget):
     def _update_coords(self):
         mc = self.mc()
         if mc is None:
-            self.coord_display.setText("X: ?, Y: ?, Z: unavailable — not connected")
+            z = "?" if self._supports_axis('Z') else "unavailable"
+            self.coord_display.setText(f"X: ?, Y: ?, Z: {z} — not connected")
         elif not mc.is_position_valid():
-            self.coord_display.setText("X: ?, Y: ?, Z: unavailable — POSITION UNKNOWN")
+            z = "?" if mc.supports_axis('Z') else "unavailable"
+            self.coord_display.setText(f"X: ?, Y: ?, Z: {z} — POSITION UNKNOWN")
         else:
-            self.coord_display.setText(f"X: {mc.get_x()}, Y: {mc.get_y()}, Z: unavailable")
+            z = mc.get_z() if mc.supports_axis('Z') else "unavailable"
+            self.coord_display.setText(f"X: {mc.get_x()}, Y: {mc.get_y()}, Z: {z}")
 
     def show_coords(self):
         self._update_coords()
@@ -465,7 +480,8 @@ class AutoScan(QWidget):
             self.scan_info.setText(f"Error: {info['error']}")
             return
         x, y, z = info['x'], info['y'], info['z']
-        self.coord_display.setText(f"X: {x}, Y: {y}, Z: unavailable")
+        z_text = z if self._supports_axis('Z') else "unavailable"
+        self.coord_display.setText(f"X: {x}, Y: {y}, Z: {z_text}")
         flake_txt = f"flake=YES ({info['flake_size']}pts)" if info['flake_found'] else "flake=no"
         self.scan_info.setText(
             f"Step {info['done']}/{info['total']}  s={info['slow_i']} f={info['fast_j']}  {flake_txt}"

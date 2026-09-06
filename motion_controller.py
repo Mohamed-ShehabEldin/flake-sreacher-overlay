@@ -1,6 +1,7 @@
 import math
 import numbers
 import threading
+from dataclasses import dataclass
 
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5 import QtTest
@@ -13,6 +14,25 @@ MIN_STEP_DELAY_US = 10
 MAX_STEP_DELAY_US = 10000
 MIN_ACK_TIMEOUT_S = 2.0
 ACK_MARGIN_S = 2.0
+
+
+@dataclass(frozen=True)
+class StageCapabilities:
+    supported_axes: frozenset[str]
+
+    def __post_init__(self):
+        normalized = frozenset(axis.upper() for axis in self.supported_axes)
+        if not normalized <= {"X", "Y", "Z"}:
+            raise ValueError("Controller capabilities contain an unknown axis.")
+        object.__setattr__(self, "supported_axes", normalized)
+
+    def supports_axis(self, axis):
+        return axis.upper() in self.supported_axes
+
+
+# This is the single switch for axes implemented by the connected firmware.
+# Add "Z" here only when matching firmware has been deployed and verified.
+CURRENT_FIRMWARE_CAPABILITIES = StageCapabilities(frozenset({"X", "Y"}))
 
 
 class MotionError(RuntimeError):
@@ -63,8 +83,13 @@ class MotionWorker(QThread):
 
 
 class MotionController:
-    def __init__(self, com_port, serial_factory=None, boot_wait_ms=2000):
+    DEFAULT_CAPABILITIES = CURRENT_FIRMWARE_CAPABILITIES
+
+    def __init__(self, com_port, serial_factory=None, boot_wait_ms=2000, capabilities=None):
         self.com_port = com_port
+        self.capabilities = (
+            capabilities if capabilities is not None else self.DEFAULT_CAPABILITIES
+        )
         self.motion_controller = None
         self.absolute_x = 0
         self.absolute_y = 0
@@ -120,6 +145,9 @@ class MotionController:
             ser = self.ser
             connected = ser is not None and getattr(ser, "is_open", True)
             return self.position_valid and connected
+
+    def supports_axis(self, axis):
+        return self.capabilities.supports_axis(axis)
 
     def acquire_exclusive(self, owner):
         if owner is None:
@@ -233,8 +261,11 @@ class MotionController:
                 self._communication_failed(e)
 
     def _move(self, axis, step, speed=None, owner=None):
-        if axis == "Z":
-            raise UnsupportedAxisError("Z axis is unavailable in the current firmware.")
+        axis = axis.upper()
+        if not self.supports_axis(axis):
+            raise UnsupportedAxisError(
+                f"{axis} axis is unavailable in the connected controller firmware."
+            )
         steps = self._validate_steps(step)
         self._speed_to_delay(speed)
 
@@ -259,8 +290,11 @@ class MotionController:
                 if axis == "X":
                     self.absolute_x += steps
                     return self.absolute_x
-                self.absolute_y += steps
-                return self.absolute_y
+                if axis == "Y":
+                    self.absolute_y += steps
+                    return self.absolute_y
+                self.absolute_z += steps
+                return self.absolute_z
 
     def move_x(self, step=1, speed=None, owner=None):
         return self._move("X", step, speed=speed, owner=owner)
@@ -269,7 +303,7 @@ class MotionController:
         return self._move("Y", step, speed=speed, owner=owner)
 
     def move_z(self, step=1, speed=None, owner=None):
-        raise UnsupportedAxisError("Z axis is unavailable in the current firmware.")
+        return self._move("Z", step, speed=speed, owner=owner)
 
     def _communication_failed(self, error):
         if isinstance(error, StageCommunicationError):
@@ -302,7 +336,8 @@ class MotionController:
             return self.absolute_y
 
     def get_z(self):
-        return 0
+        with self._state_lock:
+            return self.absolute_z
 
     def disconnect(self):
         self._invalidate_and_close("Disconnected; stage position is unknown.")

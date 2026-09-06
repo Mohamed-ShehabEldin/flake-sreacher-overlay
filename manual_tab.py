@@ -42,6 +42,8 @@ class ManualTab(QWidget):
         self.xmm.pressed.connect(lambda: self._start_continuous('x', -CONTINUOUS_STEPS, self.x_speed_bx))
         self.ypp.pressed.connect(lambda: self._start_continuous('y',  CONTINUOUS_STEPS, self.y_speed_bx))
         self.ymm.pressed.connect(lambda: self._start_continuous('y', -CONTINUOUS_STEPS, self.y_speed_bx))
+        self.zpp.pressed.connect(lambda: self._start_continuous('z',  CONTINUOUS_STEPS, self.z_speed_bx))
+        self.zmm.pressed.connect(lambda: self._start_continuous('z', -CONTINUOUS_STEPS, self.z_speed_bx))
 
         self.xpp.released.connect(self._stop_continuous)
         self.xmm.released.connect(self._stop_continuous)
@@ -56,34 +58,48 @@ class ManualTab(QWidget):
         self.move_to_z_btn.clicked.connect(self.move_to_z)
 
         self.setFocusPolicy(Qt.StrongFocus)
-        self._disable_z_controls()
+        self._refresh_axis_controls()
         self.show_coords()
 
-    def _disable_z_controls(self):
-        message = "Z axis unavailable: current firmware supports X and Y only."
-        for widget in (
-            self.zp, self.zm, self.zpp, self.zmm,
-            self.z_speed_bx, self.z_angle_bx,
-            self.move_to_z_btn, self.move_to_z_spinbx,
-        ):
-            widget.setEnabled(False)
-            widget.setToolTip(message)
+    def _supports_axis(self, axis):
+        if self.motion_controller is not None:
+            return self.motion_controller.supports_axis(axis)
+        return MotionController.DEFAULT_CAPABILITIES.supports_axis(axis)
 
-    def _xy_motion_widgets(self):
-        return (
-            self.xp, self.xm, self.yp, self.ym,
-            self.xpp, self.xmm, self.ypp, self.ymm,
-            self.move_to_x_btn, self.move_to_y_btn,
-            self.move_to_x_spinbx, self.move_to_y_spinbx,
-            self.x_speed_bx, self.y_speed_bx,
-            self.x_angle_bx, self.y_angle_bx,
-            self.arrows_ctrl_chkBx,
+    def _axis_widgets(self, axis):
+        return {
+            'X': (
+                self.xp, self.xm, self.xpp, self.xmm,
+                self.move_to_x_btn, self.move_to_x_spinbx,
+                self.x_speed_bx, self.x_angle_bx,
+            ),
+            'Y': (
+                self.yp, self.ym, self.ypp, self.ymm,
+                self.move_to_y_btn, self.move_to_y_spinbx,
+                self.y_speed_bx, self.y_angle_bx,
+            ),
+            'Z': (
+                self.zp, self.zm, self.zpp, self.zmm,
+                self.move_to_z_btn, self.move_to_z_spinbx,
+                self.z_speed_bx, self.z_angle_bx,
+            ),
+        }[axis]
+
+    def _refresh_axis_controls(self):
+        for axis in ('X', 'Y', 'Z'):
+            supported = self._supports_axis(axis)
+            enabled = supported and not self._scan_active
+            tooltip = "" if supported else f"{axis} axis unavailable in controller firmware."
+            for widget in self._axis_widgets(axis):
+                widget.setEnabled(enabled)
+                widget.setToolTip(tooltip)
+        self.arrows_ctrl_chkBx.setEnabled(
+            not self._scan_active and (self._supports_axis('X') or self._supports_axis('Y'))
         )
 
     def set_scan_active(self, active):
         self._scan_active = active
-        for widget in self._xy_motion_widgets():
-            widget.setEnabled(not active)
+        self._refresh_axis_controls()
         self.combo_connect_M.setEnabled(not active)
         if active:
             self.push_connect_M.setText("Disconnect")
@@ -100,13 +116,18 @@ class ManualTab(QWidget):
         mc = self.motion_controller
         return mc is not None and mc.is_connected() and mc.is_position_valid()
 
-    def _require_controller(self):
+    def _require_controller(self, axis=None):
         if self._scan_active:
             self.MController_status.setText("Auto scan owns stage")
             return None
         if not self._controller_ready():
             self.MController_status.setText("Connect stage first — position unknown")
             self.show_coords()
+            return None
+        if axis is not None and not self.motion_controller.supports_axis(axis):
+            self.MController_status.setText(
+                f"{axis.upper()} axis unavailable in controller firmware"
+            )
             return None
         return self.motion_controller
 
@@ -148,9 +169,9 @@ class ManualTab(QWidget):
         if Qt.Key_Left  in self._held_keys: x_steps -= CONTINUOUS_STEPS
         if Qt.Key_Up    in self._held_keys: y_steps += CONTINUOUS_STEPS
         if Qt.Key_Down  in self._held_keys: y_steps -= CONTINUOUS_STEPS
-        if x_steps != 0:
+        if x_steps != 0 and mc.supports_axis('X'):
             mc.move_x(x_steps, speed=self.x_speed_bx.value(), owner=self)
-        if y_steps != 0:
+        if y_steps != 0 and mc.supports_axis('Y'):
             mc.move_y(y_steps, speed=self.y_speed_bx.value(), owner=self)
 
     def _fire_arrows(self):
@@ -198,11 +219,13 @@ class ManualTab(QWidget):
         if not self.motion_controller.is_connected():
             print(f"Failed to connect on {comPort}!")
             self.MController_status.setText("Connection failed — position unknown")
+            self._refresh_axis_controls()
             self.show_coords()
             return
         print(f"Connected on {comPort}")
         self.MController_status.setText("Connected")
         self.push_connect_M.setText("Reconnect")
+        self._refresh_axis_controls()
         self.show_coords()
 
 
@@ -234,12 +257,12 @@ class ManualTab(QWidget):
     ######## continuous (held) motion ########
 
     def _start_continuous(self, axis, steps, speed_bx):
-        mc = self._require_controller()
+        mc = self._require_controller(axis)
         if mc is None:
             return
         speed = speed_bx.value()
         self._continuous_active = True
-        move_fn = mc.move_x if axis == 'x' else mc.move_y
+        move_fn = {'x': mc.move_x, 'y': mc.move_y, 'z': mc.move_z}[axis]
         self._continuous_fn = lambda: move_fn(steps, speed=speed, owner=self)
         self._fire_continuous()
 
@@ -278,41 +301,49 @@ class ManualTab(QWidget):
     ######## single-step motion ########
 
     def xpf(self):
-        mc = self._require_controller()
+        mc = self._require_controller('X')
         if mc is None:
             return
         speed, steps = self.x_speed_bx.value(), self.x_angle_bx.value()
         self._run(lambda: mc.move_x(steps, speed=speed, owner=self))
 
     def xmf(self):
-        mc = self._require_controller()
+        mc = self._require_controller('X')
         if mc is None:
             return
         speed, steps = self.x_speed_bx.value(), self.x_angle_bx.value()
         self._run(lambda: mc.move_x(-steps, speed=speed, owner=self))
 
     def ypf(self):
-        mc = self._require_controller()
+        mc = self._require_controller('Y')
         if mc is None:
             return
         speed, steps = self.y_speed_bx.value(), self.y_angle_bx.value()
         self._run(lambda: mc.move_y(steps, speed=speed, owner=self))
 
     def ymf(self):
-        mc = self._require_controller()
+        mc = self._require_controller('Y')
         if mc is None:
             return
         speed, steps = self.y_speed_bx.value(), self.y_angle_bx.value()
         self._run(lambda: mc.move_y(-steps, speed=speed, owner=self))
 
     def zpf(self):
-        self.MController_status.setText("Z axis unavailable in current firmware")
+        mc = self._require_controller('Z')
+        if mc is None:
+            return
+        speed, steps = self.z_speed_bx.value(), self.z_angle_bx.value()
+        self._run(lambda: mc.move_z(steps, speed=speed, owner=self))
 
     def zmf(self):
-        self.MController_status.setText("Z axis unavailable in current firmware")
+        mc = self._require_controller('Z')
+        if mc is None:
+            return
+        speed, steps = self.z_speed_bx.value(), self.z_angle_bx.value()
+        self._run(lambda: mc.move_z(-steps, speed=speed, owner=self))
 
     def move_to_x(self):
-        mc = self._require_controller()
+        mc = self._require_controller('X')
         if mc is None:
             return
         steps = self.move_to_x_spinbx.value() - mc.get_x()
@@ -321,7 +352,7 @@ class ManualTab(QWidget):
             self._run(lambda: mc.move_x(steps, speed=speed, owner=self))
 
     def move_to_y(self):
-        mc = self._require_controller()
+        mc = self._require_controller('Y')
         if mc is None:
             return
         steps = self.move_to_y_spinbx.value() - mc.get_y()
@@ -330,13 +361,22 @@ class ManualTab(QWidget):
             self._run(lambda: mc.move_y(steps, speed=speed, owner=self))
 
     def move_to_z(self):
-        self.MController_status.setText("Z axis unavailable in current firmware")
+        mc = self._require_controller('Z')
+        if mc is None:
+            return
+        steps = self.move_to_z_spinbx.value() - mc.get_z()
+        if steps != 0:
+            speed = self.z_speed_bx.value()
+            self._run(lambda: mc.move_z(steps, speed=speed, owner=self))
 
     def show_coords(self):
         mc = self.motion_controller
         if mc is None:
-            self.coord_display.setText("X: ?, Y: ?, Z: unavailable — not connected")
+            z = "?" if self._supports_axis('Z') else "unavailable"
+            self.coord_display.setText(f"X: ?, Y: ?, Z: {z} — not connected")
         elif not mc.is_position_valid():
-            self.coord_display.setText("X: ?, Y: ?, Z: unavailable — POSITION UNKNOWN")
+            z = "?" if mc.supports_axis('Z') else "unavailable"
+            self.coord_display.setText(f"X: ?, Y: ?, Z: {z} — POSITION UNKNOWN")
         else:
-            self.coord_display.setText(f"X: {mc.get_x()}, Y: {mc.get_y()}, Z: unavailable")
+            z = mc.get_z() if mc.supports_axis('Z') else "unavailable"
+            self.coord_display.setText(f"X: {mc.get_x()}, Y: {mc.get_y()}, Z: {z}")

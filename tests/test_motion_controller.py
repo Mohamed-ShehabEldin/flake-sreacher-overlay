@@ -10,6 +10,7 @@ from motion_controller import (
     MotionBusyError,
     MotionController,
     MotionNotConnectedError,
+    StageCapabilities,
     StageCommunicationError,
     UnsupportedAxisError,
 )
@@ -73,8 +74,13 @@ class DynamicSerial(FakeSerial):
             return self._responses.popleft()
 
 
-def controller_with(fake):
-    return MotionController("FAKE", serial_factory=lambda *args, **kwargs: fake, boot_wait_ms=0)
+def controller_with(fake, capabilities=None):
+    return MotionController(
+        "FAKE",
+        serial_factory=lambda *args, **kwargs: fake,
+        boot_wait_ms=0,
+        capabilities=capabilities,
+    )
 
 
 class MotionControllerTests(unittest.TestCase):
@@ -162,6 +168,16 @@ class MotionControllerTests(unittest.TestCase):
 
         self.assertEqual(fake.writes, [])
         self.assertEqual(controller.get_z(), 0)
+
+    def test_z_follows_controller_capability(self):
+        fake = FakeSerial([speed_ack(), b"Z moved 100 steps.\n"])
+        capabilities = StageCapabilities(frozenset({"X", "Y", "Z"}))
+        controller = controller_with(fake, capabilities=capabilities)
+
+        controller.move_z(100, speed=0.4)
+
+        self.assertEqual(fake.writes, ["S 195", "Z 100"])
+        self.assertEqual(controller.get_z(), 100)
 
     def test_fractional_steps_are_rejected_without_writing(self):
         fake = FakeSerial()
