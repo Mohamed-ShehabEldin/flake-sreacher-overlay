@@ -60,6 +60,8 @@ class ManualTabTests(unittest.TestCase):
         ):
             self.assertFalse(widget.isEnabled())
             self.assertIn("firmware", widget.toolTip())
+        self.assertTrue(tab.z_capability_note.isVisibleTo(tab))
+        self.assertIn("X/Y only", tab.z_capability_note.text())
 
     def test_z_controls_enable_when_controller_reports_capability(self):
         tab = ManualTab()
@@ -75,18 +77,21 @@ class ManualTabTests(unittest.TestCase):
         ):
             self.assertTrue(widget.isEnabled())
             self.assertEqual(widget.toolTip(), "")
+        self.assertFalse(tab.z_capability_note.isVisibleTo(tab))
         self.assertIn("Z: 0", tab.coord_display.text())
 
     def test_scan_disables_jogging_but_keeps_safety_disconnect(self):
         tab = ManualTab()
+        tab.motion_controller = CapabilityController({"X", "Y"})
+        tab._refresh_connection_controls()
 
         tab.set_scan_active(True)
 
         self.assertFalse(tab.xp.isEnabled())
         self.assertFalse(tab.xpp.isEnabled())
         self.assertFalse(tab.move_to_x_btn.isEnabled())
-        self.assertTrue(tab.push_connect_M.isEnabled())
-        self.assertEqual(tab.push_connect_M.text(), "Disconnect")
+        self.assertFalse(tab.push_connect_M.isEnabled())
+        self.assertTrue(tab.disconnect_M_btn.isEnabled())
 
 
 if __name__ == "__main__":

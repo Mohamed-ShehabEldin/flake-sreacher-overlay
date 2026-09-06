@@ -2,637 +2,140 @@
 <ui version="4.0">
  <class>Form</class>
  <widget class="QWidget" name="Form">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>251</width>
-    <height>609</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>Form</string>
-  </property>
-  <widget class="QWidget" name="settings_tab" native="true">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>251</width>
-     <height>611</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">background-color: rgb(249, 255, 125);</string>
-   </property>
-   <widget class="QLabel" name="label_18">
-    <property name="geometry">
-     <rect>
-      <x>60</x>
-      <y>10</y>
-      <width>151</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">font:bold 12px; </string>
-    </property>
-    <property name="text">
-     <string>Manual Control</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="push_connect_M">
-    <property name="geometry">
-     <rect>
-      <x>140</x>
-      <y>60</y>
-      <width>71</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Connect</string>
-    </property>
-   </widget>
-   <widget class="QComboBox" name="combo_connect_M">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>60</y>
-      <width>104</width>
-      <height>26</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="MController_status">
-    <property name="geometry">
-     <rect>
-      <x>150</x>
-      <y>110</y>
-      <width>60</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>status</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="ym">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>230</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>-</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="xm">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>200</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>-</string>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="x_speed_bx">
-    <property name="geometry">
-     <rect>
-      <x>77</x>
-      <y>200</y>
-      <width>61</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>3</number>
-    </property>
-    <property name="minimum">
-     <double>-10000000.000000000000000</double>
-    </property>
-    <property name="maximum">
-     <double>10000000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-    <property name="value">
-     <double>0.400000000000000</double>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="zm">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>260</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>-</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="xp">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>200</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>+</string>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="z_speed_bx">
-    <property name="geometry">
-     <rect>
-      <x>77</x>
-      <y>260</y>
-      <width>61</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>3</number>
-    </property>
-    <property name="minimum">
-     <double>-10000000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-    <property name="value">
-     <double>0.400000000000000</double>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="y_speed_bx">
-    <property name="geometry">
-     <rect>
-      <x>77</x>
-      <y>230</y>
-      <width>61</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>3</number>
-    </property>
-    <property name="minimum">
-     <double>-10000000.000000000000000</double>
-    </property>
-    <property name="maximum">
-     <double>10000000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-    <property name="value">
-     <double>0.400000000000000</double>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="yp">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>230</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>+</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_19">
-    <property name="geometry">
-     <rect>
-      <x>70</x>
-      <y>180</y>
-      <width>60</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">font:bold 14px; 
-</string>
-    </property>
-    <property name="text">
-     <string>speed</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_20">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>200</y>
-      <width>16</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>X</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_21">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>260</y>
-      <width>21</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Z</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_22">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>230</y>
-      <width>21</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Y</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="zp">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>260</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>+</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>30</y>
-      <width>171</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>-----------------------------</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_2">
-    <property name="geometry">
-     <rect>
-      <x>-10</x>
-      <y>140</y>
-      <width>261</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>==================================</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_3">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>160</y>
-      <width>171</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>-----------------------------</string>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="z_angle_bx">
-    <property name="geometry">
-     <rect>
-      <x>137</x>
-      <y>260</y>
-      <width>61</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>3</number>
-    </property>
-    <property name="minimum">
-     <double>-10000000.000000000000000</double>
-    </property>
-    <property name="maximum">
-     <double>10000000000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-    <property name="value">
-     <double>1000.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="x_angle_bx">
-    <property name="geometry">
-     <rect>
-      <x>137</x>
-      <y>200</y>
-      <width>61</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>3</number>
-    </property>
-    <property name="minimum">
-     <double>-10000000.000000000000000</double>
-    </property>
-    <property name="maximum">
-     <double>10000000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-    <property name="value">
-     <double>1000.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="y_angle_bx">
-    <property name="geometry">
-     <rect>
-      <x>137</x>
-      <y>230</y>
-      <width>61</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>3</number>
-    </property>
-    <property name="minimum">
-     <double>-10000000.000000000000000</double>
-    </property>
-    <property name="maximum">
-     <double>10000000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-    <property name="value">
-     <double>1000.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_23">
-    <property name="geometry">
-     <rect>
-      <x>130</x>
-      <y>180</y>
-      <width>60</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">font:bold 14px; 
-</string>
-    </property>
-    <property name="text">
-     <string>angle</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="coord_display">
-    <property name="geometry">
-     <rect>
-      <x>60</x>
-      <y>310</y>
-      <width>131</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>X: 0, Y: 0, Z: 0</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="ypp">
-    <property name="geometry">
-     <rect>
-      <x>230</x>
-      <y>230</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>++</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="zpp">
-    <property name="geometry">
-     <rect>
-      <x>230</x>
-      <y>260</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>++</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="xpp">
-    <property name="geometry">
-     <rect>
-      <x>230</x>
-      <y>200</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>++</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="zmm">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>260</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>--</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="ymm">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>230</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>--</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="xmm">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>200</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>--</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="move_to_x_btn">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>420</y>
-      <width>81</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>move to x</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="move_to_y_btn">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>450</y>
-      <width>81</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>move to y</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="move_to_z_btn">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>480</y>
-      <width>81</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>move to z</string>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="move_to_x_spinbx">
-    <property name="geometry">
-     <rect>
-      <x>120</x>
-      <y>420</y>
-      <width>81</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>3</number>
-    </property>
-    <property name="minimum">
-     <double>-10000000.000000000000000</double>
-    </property>
-    <property name="maximum">
-     <double>10000000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-    <property name="value">
-     <double>1.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="move_to_y_spinbx">
-    <property name="geometry">
-     <rect>
-      <x>120</x>
-      <y>450</y>
-      <width>81</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>3</number>
-    </property>
-    <property name="minimum">
-     <double>-10000000.000000000000000</double>
-    </property>
-    <property name="maximum">
-     <double>10000000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-    <property name="value">
-     <double>1.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="move_to_z_spinbx">
-    <property name="geometry">
-     <rect>
-      <x>120</x>
-      <y>480</y>
-      <width>81</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>3</number>
-    </property>
-    <property name="minimum">
-     <double>-10000000.000000000000000</double>
-    </property>
-    <property name="maximum">
-     <double>10000000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-    <property name="value">
-     <double>1.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="arrows_ctrl_chkBx">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>360</y>
-      <width>161</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>control with arrows</string>
-    </property>
-   </widget>
-  </widget>
+  <property name="geometry"><rect><x>0</x><y>0</y><width>320</width><height>575</height></rect></property>
+  <property name="windowTitle"><string>Manual</string></property>
+  <layout class="QVBoxLayout" name="form_layout">
+   <property name="spacing"><number>6</number></property>
+   <property name="leftMargin"><number>8</number></property>
+   <property name="topMargin"><number>8</number></property>
+   <property name="rightMargin"><number>8</number></property>
+   <property name="bottomMargin"><number>8</number></property>
+   <item>
+    <widget class="QWidget" name="settings_tab" native="true">
+     <layout class="QVBoxLayout" name="settings_layout">
+      <property name="spacing"><number>6</number></property>
+      <property name="leftMargin"><number>0</number></property>
+      <property name="topMargin"><number>0</number></property>
+      <property name="rightMargin"><number>0</number></property>
+      <property name="bottomMargin"><number>0</number></property>
+      <item>
+       <widget class="QGroupBox" name="connection_group">
+        <property name="title"><string>Stage connection</string></property>
+        <layout class="QVBoxLayout" name="connection_layout">
+         <property name="spacing"><number>5</number></property>
+         <item><widget class="QComboBox" name="combo_connect_M"><property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Fixed"><horstretch>1</horstretch><verstretch>0</verstretch></sizepolicy></property></widget></item>
+         <item><layout class="QHBoxLayout" name="connection_buttons_layout">
+          <item><widget class="QPushButton" name="push_connect_M"><property name="text"><string>Connect</string></property></widget></item>
+          <item><widget class="QPushButton" name="disconnect_M_btn"><property name="text"><string>Disconnect</string></property><property name="safety" stdset="0"><bool>true</bool></property></widget></item>
+         </layout></item>
+         <item><widget class="QLabel" name="MController_status"><property name="text"><string>Not connected</string></property><property name="wordWrap"><bool>true</bool></property><property name="statusState" stdset="0"><string>neutral</string></property></widget></item>
+         <item><widget class="QLabel" name="coord_display"><property name="text"><string>X: ?, Y: ?, Z: unavailable — not connected</string></property><property name="wordWrap"><bool>true</bool></property><property name="statusState" stdset="0"><string>unknown</string></property></widget></item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QScrollArea" name="manual_scroll_area">
+        <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
+        <property name="horizontalScrollBarPolicy"><enum>Qt::ScrollBarAlwaysOff</enum></property>
+        <property name="verticalScrollBarPolicy"><enum>Qt::ScrollBarAsNeeded</enum></property>
+        <property name="widgetResizable"><bool>true</bool></property>
+        <widget class="QWidget" name="manual_scroll_content">
+         <property name="geometry"><rect><x>0</x><y>0</y><width>286</width><height>770</height></rect></property>
+         <layout class="QVBoxLayout" name="manual_content_layout">
+          <property name="spacing"><number>8</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QGroupBox" name="jog_group">
+            <property name="title"><string>Jog stage</string></property>
+            <layout class="QVBoxLayout" name="jog_layout">
+             <property name="spacing"><number>7</number></property>
+             <item>
+              <widget class="QGroupBox" name="x_axis_group">
+               <property name="title"><string>X axis</string></property>
+               <layout class="QGridLayout" name="x_axis_layout">
+                <item row="0" column="0" colspan="2"><widget class="QLabel" name="x_speed_label"><property name="text"><string>Speed (rev/s)</string></property></widget></item>
+                <item row="1" column="0" colspan="2"><widget class="QDoubleSpinBox" name="x_speed_bx"><property name="decimals"><number>3</number></property><property name="minimum"><double>-10000000.000000000000000</double></property><property name="maximum"><double>10000000.000000000000000</double></property><property name="singleStep"><double>0.010000000000000</double></property><property name="value"><double>0.400000000000000</double></property></widget></item>
+                <item row="2" column="0" colspan="2"><widget class="QLabel" name="x_step_label"><property name="text"><string>Step (motor steps)</string></property></widget></item>
+                <item row="3" column="0" colspan="2"><widget class="QDoubleSpinBox" name="x_angle_bx"><property name="decimals"><number>3</number></property><property name="minimum"><double>-10000000.000000000000000</double></property><property name="maximum"><double>10000000.000000000000000</double></property><property name="singleStep"><double>0.010000000000000</double></property><property name="value"><double>1000.000000000000000</double></property></widget></item>
+                <item row="4" column="0"><widget class="QPushButton" name="xmm"><property name="text"><string>Hold −</string></property></widget></item>
+                <item row="4" column="1"><widget class="QPushButton" name="xm"><property name="text"><string>− Step</string></property></widget></item>
+                <item row="5" column="0"><widget class="QPushButton" name="xp"><property name="text"><string>+ Step</string></property></widget></item>
+                <item row="5" column="1"><widget class="QPushButton" name="xpp"><property name="text"><string>Hold +</string></property></widget></item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="y_axis_group">
+               <property name="title"><string>Y axis</string></property>
+               <layout class="QGridLayout" name="y_axis_layout">
+                <item row="0" column="0" colspan="2"><widget class="QLabel" name="y_speed_label"><property name="text"><string>Speed (rev/s)</string></property></widget></item>
+                <item row="1" column="0" colspan="2"><widget class="QDoubleSpinBox" name="y_speed_bx"><property name="decimals"><number>3</number></property><property name="minimum"><double>-10000000.000000000000000</double></property><property name="maximum"><double>10000000.000000000000000</double></property><property name="singleStep"><double>0.010000000000000</double></property><property name="value"><double>0.400000000000000</double></property></widget></item>
+                <item row="2" column="0" colspan="2"><widget class="QLabel" name="y_step_label"><property name="text"><string>Step (motor steps)</string></property></widget></item>
+                <item row="3" column="0" colspan="2"><widget class="QDoubleSpinBox" name="y_angle_bx"><property name="decimals"><number>3</number></property><property name="minimum"><double>-10000000.000000000000000</double></property><property name="maximum"><double>10000000.000000000000000</double></property><property name="singleStep"><double>0.010000000000000</double></property><property name="value"><double>1000.000000000000000</double></property></widget></item>
+                <item row="4" column="0"><widget class="QPushButton" name="ymm"><property name="text"><string>Hold −</string></property></widget></item>
+                <item row="4" column="1"><widget class="QPushButton" name="ym"><property name="text"><string>− Step</string></property></widget></item>
+                <item row="5" column="0"><widget class="QPushButton" name="yp"><property name="text"><string>+ Step</string></property></widget></item>
+                <item row="5" column="1"><widget class="QPushButton" name="ypp"><property name="text"><string>Hold +</string></property></widget></item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="z_axis_group">
+               <property name="title"><string>Z axis</string></property>
+               <layout class="QVBoxLayout" name="z_axis_outer_layout">
+                <item><widget class="QLabel" name="z_capability_note"><property name="text"><string>Z unavailable — current controller firmware supports X/Y only.</string></property><property name="wordWrap"><bool>true</bool></property><property name="secondary" stdset="0"><bool>true</bool></property></widget></item>
+                <item>
+                 <layout class="QGridLayout" name="z_axis_layout">
+                  <item row="0" column="0" colspan="2"><widget class="QLabel" name="z_speed_label"><property name="text"><string>Speed (rev/s)</string></property></widget></item>
+                  <item row="1" column="0" colspan="2"><widget class="QDoubleSpinBox" name="z_speed_bx"><property name="decimals"><number>3</number></property><property name="minimum"><double>-10000000.000000000000000</double></property><property name="singleStep"><double>0.010000000000000</double></property><property name="value"><double>0.400000000000000</double></property></widget></item>
+                  <item row="2" column="0" colspan="2"><widget class="QLabel" name="z_step_label"><property name="text"><string>Step (motor steps)</string></property></widget></item>
+                  <item row="3" column="0" colspan="2"><widget class="QDoubleSpinBox" name="z_angle_bx"><property name="decimals"><number>3</number></property><property name="minimum"><double>-10000000.000000000000000</double></property><property name="maximum"><double>10000000000.000000000000000</double></property><property name="singleStep"><double>0.010000000000000</double></property><property name="value"><double>1000.000000000000000</double></property></widget></item>
+                  <item row="4" column="0"><widget class="QPushButton" name="zmm"><property name="text"><string>Hold −</string></property></widget></item>
+                  <item row="4" column="1"><widget class="QPushButton" name="zm"><property name="text"><string>− Step</string></property></widget></item>
+                  <item row="5" column="0"><widget class="QPushButton" name="zp"><property name="text"><string>+ Step</string></property></widget></item>
+                  <item row="5" column="1"><widget class="QPushButton" name="zpp"><property name="text"><string>Hold +</string></property></widget></item>
+                 </layout>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="keyboard_group">
+            <property name="title"><string>Keyboard control</string></property>
+            <layout class="QVBoxLayout" name="keyboard_layout"><item><widget class="QCheckBox" name="arrows_ctrl_chkBx"><property name="text"><string>Control X/Y with arrow keys</string></property></widget></item></layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="move_to_group">
+            <property name="title"><string>Move to position</string></property>
+            <layout class="QGridLayout" name="move_to_layout">
+             <item row="0" column="0" colspan="2"><widget class="QLabel" name="move_to_x_label"><property name="text"><string>X target</string></property></widget></item>
+             <item row="1" column="0"><widget class="QDoubleSpinBox" name="move_to_x_spinbx"><property name="decimals"><number>3</number></property><property name="minimum"><double>-10000000.000000000000000</double></property><property name="maximum"><double>10000000.000000000000000</double></property><property name="singleStep"><double>0.010000000000000</double></property><property name="value"><double>1.000000000000000</double></property></widget></item>
+             <item row="1" column="1"><widget class="QPushButton" name="move_to_x_btn"><property name="text"><string>Move X</string></property></widget></item>
+             <item row="2" column="0" colspan="2"><widget class="QLabel" name="move_to_y_label"><property name="text"><string>Y target</string></property></widget></item>
+             <item row="3" column="0"><widget class="QDoubleSpinBox" name="move_to_y_spinbx"><property name="decimals"><number>3</number></property><property name="minimum"><double>-10000000.000000000000000</double></property><property name="maximum"><double>10000000.000000000000000</double></property><property name="singleStep"><double>0.010000000000000</double></property><property name="value"><double>1.000000000000000</double></property></widget></item>
+             <item row="3" column="1"><widget class="QPushButton" name="move_to_y_btn"><property name="text"><string>Move Y</string></property></widget></item>
+             <item row="4" column="0" colspan="2"><widget class="QLabel" name="move_to_z_label"><property name="text"><string>Z target</string></property></widget></item>
+             <item row="5" column="0"><widget class="QDoubleSpinBox" name="move_to_z_spinbx"><property name="decimals"><number>3</number></property><property name="minimum"><double>-10000000.000000000000000</double></property><property name="maximum"><double>10000000.000000000000000</double></property><property name="singleStep"><double>0.010000000000000</double></property><property name="value"><double>1.000000000000000</double></property></widget></item>
+             <item row="5" column="1"><widget class="QPushButton" name="move_to_z_btn"><property name="text"><string>Move Z</string></property></widget></item>
+            </layout>
+           </widget>
+          </item>
+          <item><spacer name="manual_bottom_spacer"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>20</height></size></property></spacer></item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

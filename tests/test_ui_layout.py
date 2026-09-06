@@ -1,0 +1,143 @@
+import os
+import unittest
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+from PyQt5.QtCore import QPoint, QSize, Qt
+from PyQt5.QtTest import QTest
+from PyQt5.QtWidgets import QApplication
+
+from flake_searcher.main_window import MainWindow
+
+
+class ResponsiveMainWindowTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.app = QApplication.instance() or QApplication([])
+
+    def setUp(self):
+        self.window = MainWindow()
+        self.window.move(100, 80)
+        self.app.processEvents()
+
+    def tearDown(self):
+        self.window.close()
+        self.app.processEvents()
+
+    def test_window_keeps_overlay_flags_and_explicit_capture_size(self):
+        flags = self.window.windowFlags()
+        self.assertTrue(flags & Qt.FramelessWindowHint)
+        self.assertTrue(flags & Qt.WindowStaysOnTopHint)
+
+        for requested in (
+            QSize(320, 240),
+            QSize(640, 480),
+            QSize(800, 600),
+            QSize(1280, 720),
+            QSize(360, 720),
+        ):
+            with self.subTest(size=(requested.width(), requested.height())):
+                top_left = self.window.image_frame.mapToGlobal(QPoint())
+                actual = self.window.resize_capture_frame(requested)
+                self.app.processEvents()
+
+                self.assertEqual(actual, requested)
+                self.assertEqual(self.window.image_frame.size(), requested)
+                self.assertEqual(self.window.image_frame.mapToGlobal(QPoint()), top_left)
+                self.assertEqual(self.window.control_panel.x(), requested.width())
+                self.assertEqual(self.window.control_panel.width(), self.window.panel_width)
+                self.assertEqual(self.window.width(), requested.width() + self.window.panel_width)
+
+    def test_panel_width_is_bounded_and_tabs_fit_without_tab_scrolling(self):
+        self.assertGreaterEqual(self.window.panel_width, 300)
+        self.assertLessEqual(self.window.panel_width, 360)
+
+        tab_bar = self.window.all_tabWidget.tabBar()
+        self.assertFalse(tab_bar.usesScrollButtons())
+        for index in range(tab_bar.count()):
+            with self.subTest(index=index):
+                self.assertTrue(tab_bar.rect().contains(tab_bar.tabRect(index)))
+
+    def test_manual_tab_uses_vertical_scrolling_without_horizontal_overflow(self):
+        scroll = self.window.manual_tab.manual_scroll_area
+        self.assertEqual(scroll.horizontalScrollBarPolicy(), Qt.ScrollBarAlwaysOff)
+        self.assertEqual(scroll.horizontalScrollBar().maximum(), 0)
+        self.assertGreater(scroll.verticalScrollBar().maximum(), 0)
+
+    def test_window_controls_are_outside_capture_and_accessible(self):
+        frame_right = self.window.image_frame.mapToGlobal(
+            QPoint(self.window.image_frame.width(), 0)
+        ).x()
+        for button, name in (
+            (self.window.minimize_btn, "Minimize"),
+            (self.window.maximize_restore_btn, "Maximize"),
+            (self.window.close_btn, "Close"),
+        ):
+            with self.subTest(name=name):
+                self.assertGreaterEqual(button.mapToGlobal(QPoint()).x(), frame_right)
+                self.assertEqual(button.accessibleName(), name)
+                self.assertEqual(button.toolTip(), name)
+
+    def test_resize_handle_changes_only_capture_size_and_keeps_origin(self):
+        handler = self.window.interaction_handler
+        initial_origin = self.window.image_frame.mapToGlobal(QPoint())
+        initial_size = QSize(self.window.image_frame.size())
+        start = self.window.resize_handle.mapToGlobal(
+            self.window.resize_handle.rect().center()
+        )
+
+        handler._begin_resize(start)
+        handler._resize(start + QPoint(79, -36))
+        self.app.processEvents()
+
+        self.assertEqual(self.window.image_frame.mapToGlobal(QPoint()), initial_origin)
+        self.assertEqual(
+            self.window.image_frame.size(),
+            QSize(initial_size.width() + 79, initial_size.height() - 36),
+        )
+        self.assertTrue(handler.is_resizing)
+
+    def test_header_move_changes_origin_not_capture_size(self):
+        handler = self.window.interaction_handler
+        initial_size = QSize(self.window.image_frame.size())
+        start = self.window.window_header.mapToGlobal(
+            self.window.window_header.rect().center()
+        )
+        handler._begin_move(start)
+        self.window.move(start + QPoint(44, 27) - handler._move_offset)
+        self.app.processEvents()
+
+        self.assertEqual(self.window.image_frame.size(), initial_size)
+        self.assertEqual(self.window.pos(), QPoint(144, 107))
+        self.assertTrue(handler.is_moving)
+
+    def test_maximize_then_restore_recovers_capture_and_window_geometry(self):
+        self.window.resize_capture_frame(QSize(640, 480))
+        self.window.move(90, 70)
+        self.app.processEvents()
+        initial_geometry = self.window.geometry()
+        initial_capture = QSize(self.window.image_frame.size())
+
+        self.window.toggle_maximize_restore()
+        QTest.qWait(1)
+        self.app.processEvents()
+        self.assertTrue(self.window.isMaximized())
+        self.assertEqual(self.window.maximize_restore_btn.accessibleName(), "Restore")
+
+        self.window.toggle_maximize_restore()
+        QTest.qWait(1)
+        self.app.processEvents()
+        self.assertFalse(self.window.isMaximized())
+        self.assertEqual(self.window.geometry(), initial_geometry)
+        self.assertEqual(self.window.image_frame.size(), initial_capture)
+        self.assertEqual(self.window.maximize_restore_btn.accessibleName(), "Maximize")
+
+    def test_close_control_uses_normal_window_close_path(self):
+        self.assertTrue(self.window.isVisible())
+        QTest.mouseClick(self.window.close_btn, Qt.LeftButton)
+        self.app.processEvents()
+        self.assertFalse(self.window.isVisible())
+
+
+if __name__ == "__main__":
+    unittest.main()

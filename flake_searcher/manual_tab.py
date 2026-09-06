@@ -6,6 +6,7 @@ from collections import deque
 
 from .motion_controller import MotionController, MotionWorker
 from .paths import ui_path
+from .ui_feedback import set_status
 
 CONTINUOUS_STEPS = 100
 
@@ -29,6 +30,7 @@ class ManualTab(QWidget):
         ports = [port.device for port in serial.tools.list_ports.comports()]
         self.combo_connect_M.addItems(ports)
         self.push_connect_M.clicked.connect(self.connect_M_device)
+        self.disconnect_M_btn.clicked.connect(self.disconnect_M_device)
 
         # single-step buttons
         self.xp.pressed.connect(self.xpf)
@@ -60,6 +62,7 @@ class ManualTab(QWidget):
 
         self.setFocusPolicy(Qt.StrongFocus)
         self._refresh_axis_controls()
+        self._refresh_connection_controls()
         self.show_coords()
 
     def _supports_axis(self, axis):
@@ -94,18 +97,32 @@ class ManualTab(QWidget):
             for widget in self._axis_widgets(axis):
                 widget.setEnabled(enabled)
                 widget.setToolTip(tooltip)
+        z_supported = self._supports_axis('Z')
+        self.z_capability_note.setVisible(not z_supported)
+        self.z_capability_note.setText(
+            "" if z_supported else "Z unavailable — current controller firmware supports X/Y only."
+        )
         self.arrows_ctrl_chkBx.setEnabled(
             not self._scan_active and (self._supports_axis('X') or self._supports_axis('Y'))
         )
 
+    def _controller_connected(self):
+        return self.motion_controller is not None and self.motion_controller.is_connected()
+
+    def _refresh_connection_controls(self):
+        connected = self._controller_connected()
+        self.combo_connect_M.setEnabled(not self._scan_active)
+        self.push_connect_M.setEnabled(not self._scan_active)
+        self.push_connect_M.setText("Reconnect" if connected else "Connect")
+        self.disconnect_M_btn.setEnabled(connected)
+
+    def _set_controller_status(self, text, state="neutral"):
+        set_status(self.MController_status, text, state)
+
     def set_scan_active(self, active):
         self._scan_active = active
         self._refresh_axis_controls()
-        self.combo_connect_M.setEnabled(not active)
-        if active:
-            self.push_connect_M.setText("Disconnect")
-        else:
-            self.push_connect_M.setText("Reconnect" if self._controller_ready() else "Connect")
+        self._refresh_connection_controls()
 
     def has_active_motion(self):
         return bool(
@@ -119,15 +136,15 @@ class ManualTab(QWidget):
 
     def _require_controller(self, axis=None):
         if self._scan_active:
-            self.MController_status.setText("Auto scan owns stage")
+            self._set_controller_status("Auto scan owns stage", "busy")
             return None
         if not self._controller_ready():
-            self.MController_status.setText("Connect stage first — position unknown")
+            self._set_controller_status("Connect stage first — position unknown", "unknown")
             self.show_coords()
             return None
         if axis is not None and not self.motion_controller.supports_axis(axis):
-            self.MController_status.setText(
-                f"{axis.upper()} axis unavailable in controller firmware"
+            self._set_controller_status(
+                f"{axis.upper()} axis unavailable in controller firmware", "warning"
             )
             return None
         return self.motion_controller
@@ -201,32 +218,44 @@ class ManualTab(QWidget):
 
     def connect_M_device(self):
         if self._scan_active:
-            if self.motion_controller:
-                self.motion_controller.disconnect()
-            self.MController_status.setText("Disconnected — scan stopping; position unknown")
-            self.show_coords()
+            self._set_controller_status("Auto scan owns stage; use Disconnect for safety", "busy")
             return
 
         comPort = self.combo_connect_M.currentText()
         if not comPort:
-            self.MController_status.setText("No serial port selected")
+            self._set_controller_status("No serial port selected", "warning")
             return
         if self.has_active_motion():
-            self.MController_status.setText("Wait for current motion before reconnecting")
+            self._set_controller_status("Wait for current motion before reconnecting", "warning")
             return
         if self.motion_controller:
             self.motion_controller.disconnect()
         self.motion_controller = MotionController(comPort)
         if not self.motion_controller.is_connected():
             print(f"Failed to connect on {comPort}!")
-            self.MController_status.setText("Connection failed — position unknown")
+            self._set_controller_status("Connection failed — position unknown", "error")
             self._refresh_axis_controls()
+            self._refresh_connection_controls()
             self.show_coords()
             return
         print(f"Connected on {comPort}")
-        self.MController_status.setText("Connected")
-        self.push_connect_M.setText("Reconnect")
+        self._set_controller_status("Connected", "connected")
         self._refresh_axis_controls()
+        self._refresh_connection_controls()
+        self.show_coords()
+
+    def disconnect_M_device(self):
+        if self.motion_controller is not None:
+            self.motion_controller.disconnect()
+        state = "unknown" if self._scan_active else "neutral"
+        message = (
+            "Disconnected — scan stopping; position unknown"
+            if self._scan_active
+            else "Disconnected — position unknown"
+        )
+        self._set_controller_status(message, state)
+        self._refresh_axis_controls()
+        self._refresh_connection_controls()
         self.show_coords()
 
 
@@ -295,7 +324,7 @@ class ManualTab(QWidget):
         self._arrows_running = False
         self._held_keys.clear()
         self._move_queue.clear()
-        self.MController_status.setText(f"Motion error — {message}")
+        self._set_controller_status(f"Motion error — {message}", "error")
         self.show_coords()
 
 
@@ -374,10 +403,10 @@ class ManualTab(QWidget):
         mc = self.motion_controller
         if mc is None:
             z = "?" if self._supports_axis('Z') else "unavailable"
-            self.coord_display.setText(f"X: ?, Y: ?, Z: {z} — not connected")
+            set_status(self.coord_display, f"X: ?, Y: ?, Z: {z} — not connected", "unknown")
         elif not mc.is_position_valid():
             z = "?" if mc.supports_axis('Z') else "unavailable"
-            self.coord_display.setText(f"X: ?, Y: ?, Z: {z} — POSITION UNKNOWN")
+            set_status(self.coord_display, f"X: ?, Y: ?, Z: {z} — POSITION UNKNOWN", "unknown")
         else:
             z = mc.get_z() if mc.supports_axis('Z') else "unavailable"
-            self.coord_display.setText(f"X: {mc.get_x()}, Y: {mc.get_y()}, Z: {z}")
+            set_status(self.coord_display, f"X: {mc.get_x()}, Y: {mc.get_y()}, Z: {z}", "connected")
