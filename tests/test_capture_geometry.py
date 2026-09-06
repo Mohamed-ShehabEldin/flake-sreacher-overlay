@@ -127,6 +127,12 @@ class CaptureGeometryTests(unittest.TestCase):
             window.autoscan_tab.scan_info.setText(
                 "A deliberately long scan status that must never resize the capture frame"
             )
+            window.ai_tab.training_status.setText(
+                "A deliberately long training status that must never resize the capture frame"
+            )
+            window.A_Eye_Tab.info.setText(
+                "A deliberately long detector status that must never resize the capture frame"
+            )
             for index in range(window.all_tabWidget.count()):
                 window.all_tabWidget.setCurrentIndex(index)
                 self.app.processEvents()
