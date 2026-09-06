@@ -45,6 +45,11 @@ class DeploymentTests(unittest.TestCase):
     def test_sam2_build_uses_the_locked_environment(self):
         configuration = tomllib.loads((deploy.PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
         self.assertEqual(configuration["tool"]["uv"]["no-build-isolation-package"], ["sam-2"])
+        self.assertIn("setuptools==84.0.0", configuration["project"]["optional-dependencies"]["full"])
+        self.assertEqual(
+            configuration["tool"]["uv"]["extra-build-dependencies"]["sam-2"],
+            ["setuptools==84.0.0", "torch==2.10.0"],
+        )
 
     def test_correct_download_is_reused_without_network(self):
         data = b"verified"
@@ -147,12 +152,26 @@ class DeploymentTests(unittest.TestCase):
             interpreter.touch()
             with (
                 patch.object(deploy, "managed_python", return_value=interpreter),
+                patch.object(deploy, "read_state", return_value={"profile": "full"}),
                 patch.object(deploy.subprocess, "run") as run,
             ):
                 deploy.launch()
         command = run.call_args.args[0]
         self.assertEqual(command, [str(interpreter), "-m", "flake_searcher"])
         self.assertEqual(run.call_args.kwargs["cwd"], deploy.PROJECT_ROOT)
+
+    def test_launch_rejects_partial_environment(self):
+        with tempfile.TemporaryDirectory() as folder:
+            interpreter = Path(folder) / "python"
+            interpreter.touch()
+            with (
+                patch.object(deploy, "managed_python", return_value=interpreter),
+                patch.object(deploy, "read_state", return_value={}),
+                patch.object(deploy.subprocess, "run") as run,
+            ):
+                with self.assertRaisesRegex(deploy.DeploymentError, "Setup is incomplete"):
+                    deploy.launch()
+        run.assert_not_called()
 
 
 if __name__ == "__main__":

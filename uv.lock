@@ -146,6 +146,7 @@ detector = [
 full = [
     { name = "sam-2" },
     { name = "scikit-learn" },
+    { name = "setuptools" },
     { name = "tensorflow" },
     { name = "torch" },
     { name = "torchvision" },
@@ -162,6 +163,7 @@ requires-dist = [
     { name = "pyserial", specifier = "==3.5" },
     { name = "sam-2", marker = "extra == 'full'", url = "https://github.com/facebookresearch/sam2/archive/2b90b9f5ceec907a1c18123530e92e794ad901a4.tar.gz" },
     { name = "scikit-learn", marker = "extra == 'full'", specifier = "==1.8.0" },
+    { name = "setuptools", marker = "extra == 'full'", specifier = "==84.0.0" },
     { name = "tensorflow", marker = "extra == 'detector'", specifier = "==2.21.0" },
     { name = "tensorflow", marker = "extra == 'full'", specifier = "==2.21.0" },
     { name = "torch", marker = "extra == 'full'", specifier = "==2.10.0" },

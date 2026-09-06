@@ -404,7 +404,9 @@ def verification_commands(python_path: Path, profile: str) -> list[list[str]]:
 def verify_installation(profile: str | None = None, *, preview: bool = False) -> None:
     if profile is None:
         state = read_state()
-        profile = state.get("profile", "runtime")
+        if not state:
+            raise DeploymentError("Setup has not completed successfully. Run setup before verification.")
+        profile = state["profile"]
     python_path = managed_python()
     if preview:
         print(f"Would verify the {profile} environment with: {python_path}")
@@ -497,6 +499,8 @@ def launch(*, preview: bool = False) -> None:
         return
     if not python_path.is_file():
         raise DeploymentError("Managed environment is missing. Run setup first.")
+    if not read_state():
+        raise DeploymentError("Setup is incomplete. Run setup successfully before launching.")
     try:
         subprocess.run(command, cwd=PROJECT_ROOT, env=command_environment(), check=True)
     except (OSError, subprocess.CalledProcessError) as error:

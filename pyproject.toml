@@ -25,6 +25,7 @@ detector = [
 full = [
     "tensorflow==2.21.0",
     "scikit-learn==1.8.0",
+    "setuptools==84.0.0",
     "tqdm==4.67.3",
     "torch==2.10.0",
     "torchvision==0.25.0",
@@ -43,3 +44,6 @@ flake_searcher = ["ui/*.ui"]
 [tool.uv]
 package = true
 no-build-isolation-package = ["sam-2"]
+
+[tool.uv.extra-build-dependencies]
+sam-2 = ["setuptools==84.0.0", "torch==2.10.0"]

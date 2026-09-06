@@ -13,6 +13,10 @@ administrator access. Intel macOS is detected, but the locked TensorFlow 2.21
 and PyTorch 2.10 versions do not provide Intel Mac wheels, so this release stops
 with an explanation instead of attempting an unreliable source build.
 
+Miniconda is compatible as the Python used to start the deployer, but the
+application still runs in `.flake-searcher/venv`. Conda activation is not
+required after setup and does not alter the locked application packages.
+
 ## Setup
 
 From the repository folder:
