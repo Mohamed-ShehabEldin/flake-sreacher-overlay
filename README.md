@@ -9,8 +9,7 @@ small TensorFlow flake detector, and supports normal or zigzag raster scans.
 
 ## Install and start
 
-The supported setup is project-local and does not modify system Python. Install
-Python 3.10 or newer, open a terminal in this folder, and run:
+Install Miniconda, select its base Python in VS Code, and run:
 
 ```text
 python deploy_flake_searcher.py
@@ -18,9 +17,10 @@ python deploy_flake_searcher.py
 
 Choose **full installation** for detector training and SAM2, or **microscope
 runtime only** for stage control, capture, Auto Scan, and detector inference.
-The deployer obtains its own Python 3.12 and creates an isolated environment in
-the ignored `.flake-searcher/` directory. It can be run again safely to verify
-or update that managed installation.
+The deployer creates or updates an isolated Conda environment named
+`flake-searcher`, installs the locked packages automatically, downloads and
+verifies SAM2 assets when needed, and displays the exact interpreter to select
+in VS Code. Its Launch option always uses that environment.
 
 Noninteractive commands are also available:
 

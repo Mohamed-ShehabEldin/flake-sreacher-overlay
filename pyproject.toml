@@ -29,8 +29,9 @@ full = [
     "tqdm==4.67.3",
     "torch==2.10.0",
     "torchvision==0.25.0",
-    "sam-2 @ https://github.com/facebookresearch/sam2/archive/2b90b9f5ceec907a1c18123530e92e794ad901a4.tar.gz",
 ]
+# SAM2 is installed separately by deploy_flake_searcher.py after torch and
+# setuptools are available in the target environment.
 
 [project.scripts]
 flake-searcher = "flake_searcher.main_window:main"
@@ -40,10 +41,3 @@ include = ["flake_searcher*"]
 
 [tool.setuptools.package-data]
 flake_searcher = ["ui/*.ui"]
-
-[tool.uv]
-package = true
-no-build-isolation-package = ["sam-2"]
-
-[tool.uv.extra-build-dependencies]
-sam-2 = ["setuptools==84.0.0", "torch==2.10.0"]

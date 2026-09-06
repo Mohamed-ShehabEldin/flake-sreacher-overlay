@@ -13,26 +13,25 @@ image collections, or microscope captures.
 
 ## Tests
 
-With the managed full environment:
+With the full Conda environment:
 
 ```text
-.flake-searcher/venv/bin/python -m unittest discover -s tests -v
+conda run --name flake-searcher python -m unittest discover -s tests -v
 ```
 
-On Windows use `.flake-searcher\\venv\\Scripts\\python.exe` instead. Tests use
-fake serial and stage objects and do not require microscope hardware. The model
-asset test is skipped only when TensorFlow is absent.
+Tests use fake serial and stage objects and do not require microscope hardware.
+The model asset test is skipped only when TensorFlow is absent.
 
 Before committing a dependency update:
 
 ```text
-.flake-searcher/tools/uv lock
-.flake-searcher/tools/uv lock --check
+regenerate and review requirements/runtime.lock.txt and requirements/full.lock.txt
 python deploy_flake_searcher.py --setup full --preview
 ```
 
-Update the embedded uv checksums only from the official uv release checksum
-files. Update `assets/manifest.json` whenever a tracked model or checkpoint
+The requirements locks contain hashes for all resolved packages. Update the
+embedded SAM2 source checksum only when intentionally changing its pinned
+commit. Update `assets/manifest.json` whenever a tracked model or checkpoint
 identity intentionally changes.
 
 ## Protected local material
