@@ -15,6 +15,8 @@ dependencies = [
     "pillow==12.1.1",
     "pyautogui==0.9.54",
     "pyqt5==5.15.11",
+    "pyqt5-qt5==5.15.19; sys_platform == 'darwin' or sys_platform == 'linux'",
+    "pyqt5-qt5==5.15.2; sys_platform == 'win32'",
     "pyserial==3.5",
 ]
 

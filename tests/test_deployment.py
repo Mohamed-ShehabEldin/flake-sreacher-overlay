@@ -72,6 +72,33 @@ class DeploymentTests(unittest.TestCase):
         self.assertIn("torch==2.10.0", full_lock)
         self.assertNotIn("sam-2 @", full_lock)
 
+    def test_pyqt_qt_bundle_has_hash_locked_platform_pins(self):
+        project = (deploy.PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        mac_requirement = (
+            "pyqt5-qt5==5.15.19; sys_platform == 'darwin' or sys_platform == 'linux'"
+        )
+        windows_requirement = "pyqt5-qt5==5.15.2; sys_platform == 'win32'"
+        self.assertIn('"pyqt5==5.15.11"', project)
+        self.assertIn(f'"{mac_requirement}"', project)
+        self.assertIn(f'"{windows_requirement}"', project)
+
+        for profile in ("runtime", "full"):
+            lock = deploy.requirements_path(profile).read_text(encoding="utf-8")
+            self.assertIn("pyqt5==5.15.11 \\", lock)
+            self.assertIn(
+                "pyqt5-qt5==5.15.19 ; "
+                "sys_platform == 'darwin' or sys_platform == 'linux' \\",
+                lock,
+            )
+            self.assertIn(
+                "pyqt5-qt5==5.15.2 ; sys_platform == 'win32' \\", lock
+            )
+            self.assertIn(
+                "--hash=sha256:750b78e4dba6bdf1607febedc08738e318ea09e9b10aea9ff0d73073f11f6962",
+                lock,
+            )
+            self.assertNotIn("\npyqt5-qt5==5.15.19 \\", lock)
+
     def test_correct_download_is_reused_without_network(self):
         data = b"verified"
         digest = hashlib.sha256(data).hexdigest()
