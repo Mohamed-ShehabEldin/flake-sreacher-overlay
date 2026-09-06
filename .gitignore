@@ -16,6 +16,7 @@ build/
 .venv/
 venv/
 env/
+.flake-searcher/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -39,6 +40,9 @@ ai/auto_scan_v1/sam2_repo/
 *.pth
 *.ckpt
 checkpoints/
+assets/checkpoints/*.pt
+!assets/checkpoints/
+!assets/checkpoints/README.md
 
 # Data / images (can be large)
 *.png

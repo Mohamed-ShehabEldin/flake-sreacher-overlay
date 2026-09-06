@@ -1,0 +1,19 @@
+{
+  "sam2": {
+    "checkpoint": {
+      "filename": "sam2.1_hiera_small.pt",
+      "sha256": "6d1aa6f30de5c92224f8172114de081d104bbd23dd9dc5c58996f0cad5dc4d38",
+      "size": 184416285,
+      "url": "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_small.pt"
+    },
+    "source_commit": "2b90b9f5ceec907a1c18123530e92e794ad901a4"
+  },
+  "detector_models": {
+    "TIT_10x.h5": "171246d173ec3f4f6dd0c3aac994d5508236383c446aebc6de6c92a36efccc72",
+    "WSe2_EVE Microscope_10x_ALPHA.h5": "9acf4f7222b3baa4b75bc66e277a6457cfe1f26d76a7d77f412b2237d28bd04a",
+    "WSe2_EVE Microscope_20x_ALPHA.h5": "2e4146d49367194a64a094195360698a7826a01019646ae3ac221b1d2908d5ff",
+    "WSe2_EVE Microscope_50x - BETA_M1(90+).h5": "1e79009ef95727e837d633e5199ec6750ed6bc47d9346221fcec75ba26e379a7",
+    "WSe2_EVE Microscope_50x - BETA_M2(95+).h5": "1b6b0539401cc52da46de10d5cf8f989a25d4af5cad3ae1c66fc044863987b22",
+    "WSe2_EVE Microscope_50x_ALPHA.h5": "84c27b09ffe2d60e57cc54deaa2ebbc2fdbe5f9657c1c8e084adeb5cf574b21c"
+  }
+}

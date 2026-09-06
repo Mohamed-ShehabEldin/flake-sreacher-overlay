@@ -5,8 +5,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PyQt5.QtWidgets import QApplication
 
-from manual_tab import ManualTab
-from motion_controller import StageCapabilities
+from flake_searcher.manual_tab import ManualTab
+from flake_searcher.motion_controller import StageCapabilities
 
 
 class CapabilityController:

@@ -5,7 +5,7 @@ from collections import deque
 
 import serial
 
-from motion_controller import (
+from flake_searcher.motion_controller import (
     InvalidMotionCommandError,
     MotionBusyError,
     MotionController,

@@ -3,8 +3,8 @@ from unittest.mock import patch
 
 import numpy as np
 
-from autoscan_tab import ScanWorker
-from motion_controller import StageCommunicationError
+from flake_searcher.autoscan_tab import ScanWorker
+from flake_searcher.motion_controller import StageCommunicationError
 
 
 class FakeStage:
@@ -70,7 +70,7 @@ def run_scan(zigzag):
         2, 20, 0.4,
         False, "", 5, 100, 1, zigzag, object(),
     )
-    with patch("autoscan_tab.time.sleep", return_value=None):
+    with patch("flake_searcher.autoscan_tab.time.sleep", return_value=None):
         worker.run()
     return frames.positions
 
@@ -100,7 +100,7 @@ class ScanSequenceTests(unittest.TestCase):
         errors = []
         worker.stage_failed.connect(errors.append)
 
-        with patch("autoscan_tab.time.sleep", return_value=None):
+        with patch("flake_searcher.autoscan_tab.time.sleep", return_value=None):
             worker.run()
 
         self.assertEqual(frames.positions, [(0, 0)])
