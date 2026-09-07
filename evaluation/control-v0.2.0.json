@@ -1,0 +1,29 @@
+{
+  "release": "v0.2.0",
+  "commit": "ce830f7ba07dc4a8d3789edb0cc3b6c3d87e438a",
+  "detector": {
+    "path": "flake_searcher/detector.py",
+    "sha256": "eaeaeb8defecf3b24c23fbf2ba0b2247275d7997f42b8ea7c6f6629491dc1eee",
+    "fixed_postprocessing": {
+      "minimum_component_grid_points": 5,
+      "connectivity": 8,
+      "detection_condition": "filtered_grid_points > 0"
+    }
+  },
+  "application_ui_defaults": {
+    "ratio": 5,
+    "batch_size": 23000,
+    "radius": 2,
+    "thickness": -1
+  },
+  "active_model": null,
+  "active_model_note": "The v0.2.0 application requires operator selection and has no canonical active model.",
+  "models": {
+    "TIT_10x.h5": "171246d173ec3f4f6dd0c3aac994d5508236383c446aebc6de6c92a36efccc72",
+    "WSe2_EVE Microscope_10x_ALPHA.h5": "9acf4f7222b3baa4b75bc66e277a6457cfe1f26d76a7d77f412b2237d28bd04a",
+    "WSe2_EVE Microscope_20x_ALPHA.h5": "2e4146d49367194a64a094195360698a7826a01019646ae3ac221b1d2908d5ff",
+    "WSe2_EVE Microscope_50x - BETA_M1(90+).h5": "1e79009ef95727e837d633e5199ec6750ed6bc47d9346221fcec75ba26e379a7",
+    "WSe2_EVE Microscope_50x - BETA_M2(95+).h5": "1b6b0539401cc52da46de10d5cf8f989a25d4af5cad3ae1c66fc044863987b22",
+    "WSe2_EVE Microscope_50x_ALPHA.h5": "84c27b09ffe2d60e57cc54deaa2ebbc2fdbe5f9657c1c8e084adeb5cf574b21c"
+  }
+}
