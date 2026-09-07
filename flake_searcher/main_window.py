@@ -19,6 +19,7 @@ MIN_CAPTURE_FRAME_SIZE = QSize(46, 46)
 PANEL_MIN_WIDTH = 300
 PANEL_PREFERRED_WIDTH = 320
 PANEL_MAX_WIDTH = 360
+PANEL_MIN_HEIGHT = 300
 
 
 class MainWindow(QMainWindow):
@@ -74,6 +75,7 @@ class MainWindow(QMainWindow):
         # Lock the session width after font-aware selection so tab contents cannot
         # negotiate a different capture-frame size later.
         self.control_panel.setFixedWidth(self.panel_width)
+        self.control_panel.setMinimumHeight(PANEL_MIN_HEIGHT)
         self.setMinimumSize(
             MIN_CAPTURE_FRAME_SIZE.width() + self.panel_width,
             MIN_CAPTURE_FRAME_SIZE.height(),
@@ -101,7 +103,7 @@ class MainWindow(QMainWindow):
         frame_size = QSize(width, height)
         self.image_frame.setFixedSize(frame_size)
         if not self.isMaximized():
-            shell_height = max(1, self.control_panel.minimumSizeHint().height())
+            shell_height = max(PANEL_MIN_HEIGHT, self.control_panel.minimumSizeHint().height())
             self.setMinimumSize(
                 MIN_CAPTURE_FRAME_SIZE.width() + self.panel_width,
                 MIN_CAPTURE_FRAME_SIZE.height(),

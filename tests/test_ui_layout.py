@@ -1,4 +1,7 @@
 import os
+from pathlib import Path
+import subprocess
+import sys
 import unittest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -47,6 +50,7 @@ class ResponsiveMainWindowTests(unittest.TestCase):
                 self.assertEqual(self.window.control_panel.x(), requested.width())
                 self.assertEqual(self.window.control_panel.width(), self.window.panel_width)
                 self.assertEqual(self.window.width(), requested.width() + self.window.panel_width)
+                self.assertGreaterEqual(self.window.height(), requested.height())
 
     def test_panel_width_is_bounded_and_tabs_fit_without_tab_scrolling(self):
         self.assertGreaterEqual(self.window.panel_width, 300)
@@ -137,6 +141,60 @@ class ResponsiveMainWindowTests(unittest.TestCase):
         QTest.mouseClick(self.window.close_btn, Qt.LeftButton)
         self.app.processEvents()
         self.assertFalse(self.window.isVisible())
+
+    def test_minimize_control_uses_normal_window_state(self):
+        QTest.mouseClick(self.window.minimize_btn, Qt.LeftButton)
+        self.app.processEvents()
+        self.assertTrue(self.window.isMinimized())
+
+    def test_layout_contract_at_common_display_scale_factors(self):
+        project_root = Path(__file__).resolve().parents[1]
+        script = r"""
+from PyQt5.QtCore import QSize
+from PyQt5.QtWidgets import QApplication
+from flake_searcher.main_window import MainWindow
+app = QApplication([])
+window = MainWindow()
+app.processEvents()
+assert window.image_frame.size() == QSize(621, 611)
+assert 300 <= window.control_panel.width() <= 360
+bar = window.all_tabWidget.tabBar()
+assert all(bar.rect().contains(bar.tabRect(i)) for i in range(bar.count()))
+for index, scroll_name in enumerate((
+    'manual_scroll_area', 'training_scroll_area',
+    'a_eye_settings_scroll_area', 'auto_scroll_area',
+)):
+    window.all_tabWidget.setCurrentIndex(index)
+    app.processEvents()
+    tab = window.all_tabWidget.currentWidget()
+    assert getattr(tab, scroll_name).horizontalScrollBar().maximum() == 0
+window.resize_capture_frame(QSize(320, 240))
+window.all_tabWidget.setCurrentIndex(3)
+app.processEvents()
+assert window.image_frame.size() == QSize(320, 240)
+auto = window.autoscan_tab
+assert all(widget.isVisibleTo(auto) for widget in (
+    auto.coord_display, auto.scan_info, auto.scan_progress,
+    auto.start_btn, auto.stop_btn,
+))
+window.close()
+"""
+        for factor in ("1", "1.25", "1.5", "2"):
+            with self.subTest(scale=factor):
+                environment = os.environ.copy()
+                environment["PYTHONPATH"] = str(project_root)
+                environment["QT_QPA_PLATFORM"] = "offscreen"
+                environment["QT_ENABLE_HIGHDPI_SCALING"] = "1"
+                environment["QT_SCALE_FACTOR"] = factor
+                result = subprocess.run(
+                    [sys.executable, "-c", script],
+                    cwd=project_root,
+                    env=environment,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":
