@@ -238,20 +238,25 @@ class DeploymentTests(unittest.TestCase):
             "profile": "full",
             "conda": str(conda),
         }
-        with tempfile.TemporaryDirectory() as folder:
-            prefix = Path(folder) / "flake-searcher"
-            python = prefix / "bin" / "python"
-            python.parent.mkdir(parents=True)
-            python.touch()
-            with (
-                patch.object(deploy, "read_state", return_value=state),
-                patch.object(deploy, "find_conda_executable", return_value=conda),
-                patch.object(deploy, "conda_environment_prefixes", return_value=(prefix,)),
-                patch.object(deploy, "run_checked") as run,
-            ):
-                deploy.launch()
-        command = run.call_args.args[0]
-        self.assertEqual(command, [str(python), "-m", "flake_searcher"])
+        for system in ("Windows", "Darwin"):
+            with self.subTest(system=system), tempfile.TemporaryDirectory() as folder:
+                prefix = Path(folder) / "flake-searcher"
+                python = deploy.environment_python(prefix, system)
+                python.parent.mkdir(parents=True)
+                python.touch()
+                with (
+                    patch.object(deploy.platform, "system", return_value=system),
+                    patch.object(deploy, "read_state", return_value=state),
+                    patch.object(deploy, "find_conda_executable", return_value=conda),
+                    patch.object(
+                        deploy, "conda_environment_prefixes", return_value=(prefix,)
+                    ),
+                    patch.object(deploy, "run_checked") as run,
+                ):
+                    deploy.launch()
+                command = run.call_args.args[0]
+                self.assertEqual(command, [str(python), "-m", "flake_searcher"])
+                self.assertNotEqual(command[0], str(conda))
 
     def test_launch_rejects_old_or_partial_installation_state(self):
         with patch.object(deploy, "read_state", return_value={"profile": "full", "uv": "0.12.7"}):

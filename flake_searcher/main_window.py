@@ -73,6 +73,12 @@ class MainWindow(QMainWindow):
         self.tab_widget.setLayoutDirection(Qt.LeftToRight)
         self.tab_widget.tabBar().setExpanding(True)
         self.tab_widget.tabBar().setUsesScrollButtons(False)
+        if sys.platform == "win32":
+            # The Windows Qt style reports wider tab text metrics than Cocoa.
+            # Keep every full label visible inside the bounded control panel.
+            self.tab_widget.tabBar().setStyleSheet(
+                "QTabBar::tab { min-width: 0; padding: 7px 2px; }"
+            )
         requested = max(PANEL_PREFERRED_WIDTH, self.tab_widget.tabBar().sizeHint().width())
         self.panel_width = min(PANEL_MAX_WIDTH, max(PANEL_MIN_WIDTH, requested))
         # Lock the session width after font-aware selection so tab contents cannot

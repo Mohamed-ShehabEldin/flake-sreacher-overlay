@@ -13,6 +13,7 @@
     <property name="verticalScrollBarPolicy"><enum>Qt::ScrollBarAsNeeded</enum></property>
     <property name="widgetResizable"><bool>true</bool></property>
     <widget class="QWidget" name="auto_scroll_content">
+     <property name="sizePolicy"><sizepolicy hsizetype="Ignored" vsizetype="Preferred"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
      <property name="geometry"><rect><x>0</x><y>0</y><width>286</width><height>940</height></rect></property>
      <layout class="QVBoxLayout" name="auto_content_layout">
       <property name="spacing"><number>8</number></property>

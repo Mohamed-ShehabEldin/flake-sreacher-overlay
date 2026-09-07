@@ -14,6 +14,7 @@
     <property name="widgetResizable"><bool>true</bool></property>
     <property name="maximumHeight"><number>280</number></property>
     <widget class="QWidget" name="a_eye_settings_content">
+     <property name="sizePolicy"><sizepolicy hsizetype="Ignored" vsizetype="Preferred"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
      <property name="geometry"><rect><x>0</x><y>0</y><width>286</width><height>295</height></rect></property>
      <layout class="QVBoxLayout" name="a_eye_settings_layout">
       <property name="spacing"><number>8</number></property>
