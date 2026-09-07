@@ -6,7 +6,8 @@ import unittest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PyQt5.QtCore import QPoint, QSize, Qt
+from PyQt5.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt
+from PyQt5.QtGui import QMouseEvent
 from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QApplication
 
@@ -82,6 +83,75 @@ class ResponsiveMainWindowTests(unittest.TestCase):
                 self.assertEqual(button.accessibleName(), name)
                 self.assertEqual(button.toolTip(), name)
 
+    def test_external_move_handle_is_adjacent_and_outside_capture_geometry(self):
+        frame_rect = QRect(
+            self.window.image_frame.mapToGlobal(QPoint()),
+            self.window.image_frame.size(),
+        )
+        handle_rect = QRect(
+            self.window.move_mark_2.mapToGlobal(QPoint()),
+            self.window.move_mark_2.size(),
+        )
+        screenshot_rect = QRect(
+            self.window.image_frame.mapToGlobal(QPoint(15, 15)),
+            self.window.image_frame.size() - QSize(30, 30),
+        )
+
+        self.assertFalse(handle_rect.intersects(frame_rect))
+        self.assertFalse(handle_rect.intersects(screenshot_rect))
+        self.assertEqual(handle_rect.left(), frame_rect.left())
+        self.assertEqual(handle_rect.bottom() + 1, frame_rect.top())
+        self.assertEqual(self.window.move_mark_2.accessibleName(), "Move overlay")
+        self.assertEqual(
+            self.window.move_mark_2.toolTip(), "Drag to move the overlay"
+        )
+
+    def test_external_move_handle_moves_overlay_without_resizing_capture(self):
+        handle = self.window.move_mark_2
+        handler = self.window.interaction_handler
+        initial_frame_origin = self.window.image_frame.mapToGlobal(QPoint())
+        initial_frame_size = QSize(self.window.image_frame.size())
+        local = handle.rect().center()
+        start = handle.mapToGlobal(local)
+
+        right_press = QMouseEvent(
+            QEvent.MouseButtonPress,
+            QPointF(local),
+            QPointF(start),
+            Qt.RightButton,
+            Qt.RightButton,
+            Qt.NoModifier,
+        )
+        self.assertFalse(handler.eventFilter(handle, right_press))
+        self.assertFalse(handler.is_moving)
+
+        left_press = QMouseEvent(
+            QEvent.MouseButtonPress,
+            QPointF(local),
+            QPointF(start),
+            Qt.LeftButton,
+            Qt.LeftButton,
+            Qt.NoModifier,
+        )
+        self.assertTrue(handler.eventFilter(handle, left_press))
+        destination = start + QPoint(37, 29)
+        left_move = QMouseEvent(
+            QEvent.MouseMove,
+            QPointF(local),
+            QPointF(destination),
+            Qt.NoButton,
+            Qt.LeftButton,
+            Qt.NoModifier,
+        )
+        self.assertTrue(handler.eventFilter(handle, left_move))
+        self.app.processEvents()
+
+        self.assertEqual(
+            self.window.image_frame.mapToGlobal(QPoint()),
+            initial_frame_origin + QPoint(37, 29),
+        )
+        self.assertEqual(self.window.image_frame.size(), initial_frame_size)
+
     def test_resize_handle_changes_only_capture_size_and_keeps_origin(self):
         handler = self.window.interaction_handler
         initial_origin = self.window.image_frame.mapToGlobal(QPoint())
@@ -150,7 +220,7 @@ class ResponsiveMainWindowTests(unittest.TestCase):
     def test_layout_contract_at_common_display_scale_factors(self):
         project_root = Path(__file__).resolve().parents[1]
         script = r"""
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import QPoint, QSize
 from PyQt5.QtWidgets import QApplication
 from flake_searcher.main_window import MainWindow
 app = QApplication([])
@@ -158,6 +228,10 @@ window = MainWindow()
 app.processEvents()
 assert window.image_frame.size() == QSize(621, 611)
 assert 300 <= window.control_panel.width() <= 360
+frame_top_left = window.image_frame.mapToGlobal(QPoint())
+handle_top_left = window.move_mark_2.mapToGlobal(QPoint())
+assert handle_top_left.x() == frame_top_left.x()
+assert handle_top_left.y() + window.move_mark_2.height() == frame_top_left.y()
 bar = window.all_tabWidget.tabBar()
 assert all(bar.rect().contains(bar.tabRect(i)) for i in range(bar.count()))
 for index, scroll_name in enumerate((

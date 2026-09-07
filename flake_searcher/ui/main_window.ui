@@ -30,21 +30,6 @@
        <property name="topMargin"><number>0</number></property>
        <property name="rightMargin"><number>0</number></property>
        <property name="bottomMargin"><number>0</number></property>
-       <item row="0" column="0" alignment="Qt::AlignLeft|Qt::AlignTop">
-        <widget class="QLabel" name="move_mark_2">
-         <property name="minimumSize"><size><width>41</width><height>16</height></size></property>
-         <property name="maximumSize"><size><width>41</width><height>16</height></size></property>
-         <property name="cursor"><cursorShape>SizeAllCursor</cursorShape></property>
-         <property name="accessibleName"><string>Move overlay</string></property>
-         <property name="toolTip"><string>Drag to move the overlay</string></property>
-         <property name="styleSheet"><string notr="true">background-color: rgb(224, 224, 224); color: rgb(25, 35, 45);</string></property>
-         <property name="frameShape"><enum>QFrame::Box</enum></property>
-         <property name="frameShadow"><enum>QFrame::Plain</enum></property>
-         <property name="lineWidth"><number>2</number></property>
-         <property name="text"><string>&lt;-&gt;</string></property>
-         <property name="alignment"><set>Qt::AlignCenter</set></property>
-        </widget>
-       </item>
        <item row="0" column="1">
         <spacer name="frame_horizontal_spacer">
          <property name="orientation"><enum>Qt::Horizontal</enum></property>
@@ -128,6 +113,20 @@
      </widget>
     </item>
    </layout>
+   <widget class="QLabel" name="move_mark_2">
+    <property name="geometry"><rect><x>0</x><y>0</y><width>41</width><height>16</height></rect></property>
+    <property name="minimumSize"><size><width>41</width><height>16</height></size></property>
+    <property name="maximumSize"><size><width>41</width><height>16</height></size></property>
+    <property name="cursor"><cursorShape>SizeAllCursor</cursorShape></property>
+    <property name="accessibleName"><string>Move overlay</string></property>
+    <property name="toolTip"><string>Drag to move the overlay</string></property>
+    <property name="styleSheet"><string notr="true">background-color: rgb(224, 224, 224); color: rgb(25, 35, 45);</string></property>
+    <property name="frameShape"><enum>QFrame::Box</enum></property>
+    <property name="frameShadow"><enum>QFrame::Plain</enum></property>
+    <property name="lineWidth"><number>2</number></property>
+    <property name="text"><string>&lt;-&gt;</string></property>
+    <property name="alignment"><set>Qt::AlignCenter</set></property>
+   </widget>
   </widget>
  </widget>
  <resources/>

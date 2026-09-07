@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStyle, QTabWidget
 from PyQt5 import uic
 import sys
-from PyQt5.QtCore import QEvent, QRect, QSize, Qt, QTimer
+from PyQt5.QtCore import QEvent, QPoint, QRect, QSize, Qt, QTimer
 
 from .window_interaction_handler import WindowInteractionHandler
 
@@ -49,8 +49,10 @@ class MainWindow(QMainWindow):
 
         self._normal_geometry = QRect()
         self._normal_capture_size = QSize(INITIAL_CAPTURE_FRAME_SIZE)
+        self._external_handle_ready = False
         self._configure_panel()
         self._configure_window_controls()
+        self._configure_external_move_handle()
 
         # Explicit handles avoid interpreting microscope-region clicks as resize drags.
         self.interaction_handler = WindowInteractionHandler(
@@ -63,6 +65,7 @@ class MainWindow(QMainWindow):
         self.resize_capture_frame(INITIAL_CAPTURE_FRAME_SIZE)
 
         self.show()
+        self._show_external_move_handle()
 
     def _configure_panel(self):
         self.setStyleSheet(ui_path("instrument.qss").read_text(encoding="utf-8"))
@@ -96,6 +99,28 @@ class MainWindow(QMainWindow):
         self.maximize_restore_btn.clicked.connect(self.toggle_maximize_restore)
         self.close_btn.clicked.connect(self.close)
         self._update_maximize_control()
+
+    def _configure_external_move_handle(self):
+        self.move_mark_2.setWindowFlags(
+            Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+        )
+        self.move_mark_2.setAttribute(Qt.WA_ShowWithoutActivating, True)
+        self._external_handle_ready = True
+
+    def _position_external_move_handle(self):
+        if not self._external_handle_ready:
+            return
+        frame_top_left = self.image_frame.mapToGlobal(QPoint())
+        self.move_mark_2.move(
+            frame_top_left.x(),
+            frame_top_left.y() - self.move_mark_2.height(),
+        )
+
+    def _show_external_move_handle(self):
+        if not self._external_handle_ready or not self.isVisible() or self.isMinimized():
+            return
+        self._position_external_move_handle()
+        self.move_mark_2.show()
 
     def resize_capture_frame(self, requested_size):
         width = max(MIN_CAPTURE_FRAME_SIZE.width(), requested_size.width())
@@ -157,13 +182,39 @@ class MainWindow(QMainWindow):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        if self._external_handle_ready:
+            QTimer.singleShot(0, self._position_external_move_handle)
         if self.isMaximized():
             QTimer.singleShot(0, self._fit_capture_to_maximized_window)
+
+    def moveEvent(self, event):
+        super().moveEvent(event)
+        if self._external_handle_ready:
+            QTimer.singleShot(0, self._position_external_move_handle)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self._external_handle_ready:
+            QTimer.singleShot(0, self._show_external_move_handle)
+
+    def hideEvent(self, event):
+        if self._external_handle_ready:
+            self.move_mark_2.hide()
+        super().hideEvent(event)
+
+    def closeEvent(self, event):
+        if self._external_handle_ready:
+            self.move_mark_2.close()
+        super().closeEvent(event)
 
     def changeEvent(self, event):
         super().changeEvent(event)
         if event.type() == QEvent.WindowStateChange:
             self._update_maximize_control()
+            if self.isMinimized():
+                self.move_mark_2.hide()
+            else:
+                QTimer.singleShot(0, self._show_external_move_handle)
 
 def main():
     app = QApplication(sys.argv)
