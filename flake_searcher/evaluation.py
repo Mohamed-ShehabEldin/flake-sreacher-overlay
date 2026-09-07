@@ -31,6 +31,11 @@ UNAVAILABLE_QUALITY_METRICS = {
     "miss_rate": None,
 }
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROTECTED_DATA_ROOTS = (
+    PROJECT_ROOT / "flakes",
+    PROJECT_ROOT / "datapoints",
+    PROJECT_ROOT / "deploy example_zmeter-deploy-main",
+)
 
 
 class EvaluationError(RuntimeError):
@@ -88,6 +93,10 @@ def prepare_evaluation_paths(
 ) -> tuple[list[Path], Path]:
     roots, images = _resolved_input_roots(input_paths)
     output = Path(output_dir).expanduser().resolve()
+    for protected_root in PROTECTED_DATA_ROOTS:
+        protected = protected_root.resolve()
+        if output == protected or protected in output.parents:
+            raise EvaluationError(f"Output directory is inside protected data: {protected}")
     for root in roots:
         if _overlaps(root, output):
             raise EvaluationError(

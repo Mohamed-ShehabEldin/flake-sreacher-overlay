@@ -83,6 +83,15 @@ class EvaluationTests(unittest.TestCase):
             with self.assertRaisesRegex(EvaluationError, "must be separate"):
                 prepare_evaluation_paths([input_dir], input_dir / "results")
 
+    def test_output_must_not_enter_named_protected_repository_data(self):
+        with tempfile.TemporaryDirectory() as folder:
+            image_path = Path(folder) / "input.png"
+            self._write_image(image_path)
+            protected_output = PROJECT_ROOT / "flakes" / "evaluation-results"
+            with self.assertRaisesRegex(EvaluationError, "inside protected data"):
+                prepare_evaluation_paths([image_path], protected_output)
+            self.assertFalse(protected_output.exists())
+
     def test_run_preserves_input_and_writes_only_to_separate_output(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

@@ -23,6 +23,8 @@ An input may be an image file or directory. Directory traversal is recursive.
 An individually supplied file protects its parent directory as the input data
 root. The output must be a separate, new or empty directory with no ancestor or
 descendant relationship to any input root. The command refuses unsafe paths.
+It also categorically refuses output below the repository's `flakes/`,
+`datapoints/`, or `deploy example_zmeter-deploy-main/` directories.
 
 Inputs are hashed before and after evaluation. Reports, CSV timing records,
 masks, and overlays are written only below the output directory. Masks and
