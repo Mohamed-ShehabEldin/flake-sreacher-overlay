@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flake-searcher.local/schemas/evaluation-report-v1.json",
+  "title": "Flake Searcher detector evaluation report",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "control",
+    "created_utc",
+    "provenance",
+    "parameters",
+    "initialization",
+    "input_integrity",
+    "quality_metrics",
+    "repeatability",
+    "throughput",
+    "images"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "control": {"const": "v0.2.0"},
+    "created_utc": {"type": "string", "format": "date-time"},
+    "provenance": {
+      "type": "object",
+      "required": ["git_commit", "python", "platform", "model_path", "model_sha256"],
+      "properties": {
+        "git_commit": {"type": ["string", "null"]},
+        "python": {"type": "string"},
+        "platform": {"type": "string"},
+        "machine": {"type": "string"},
+        "processor": {"type": "string"},
+        "packages": {"type": "object"},
+        "model_path": {"type": "string"},
+        "model_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": true
+    },
+    "parameters": {
+      "type": "object",
+      "required": ["ratio", "batch_size", "radius", "thickness", "repeats"]
+    },
+    "initialization": {
+      "type": "object",
+      "required": ["tensorflow_import_ms", "model_load_ms"]
+    },
+    "input_integrity": {
+      "type": "object",
+      "required": ["verified", "before", "after"],
+      "properties": {
+        "verified": {"const": true},
+        "before": {"type": "object"},
+        "after": {"type": "object"}
+      }
+    },
+    "quality_metrics": {
+      "type": "object",
+      "required": [
+        "available",
+        "reason",
+        "accuracy",
+        "precision",
+        "recall",
+        "false_positive_rate",
+        "miss_rate"
+      ],
+      "properties": {
+        "available": {"const": false},
+        "reason": {"type": "string"},
+        "accuracy": {"type": "null"},
+        "precision": {"type": "null"},
+        "recall": {"type": "null"},
+        "false_positive_rate": {"type": "null"},
+        "miss_rate": {"type": "null"}
+      }
+    },
+    "repeatability": {"type": "object"},
+    "throughput": {"type": "object"},
+    "images": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "sha256",
+          "width",
+          "height",
+          "grid_rows",
+          "grid_cols",
+          "grid_points",
+          "repeatable",
+          "unique_output_hashes",
+          "repeats"
+        ]
+      }
+    }
+  },
+  "additionalProperties": true
+}

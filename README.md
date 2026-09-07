@@ -77,3 +77,6 @@ The unchanged sketch is at
 
 Training instructions are in [Training](docs/TRAINING.md). Development and test
 commands are in [Development](docs/DEVELOPMENT.md).
+
+The read-only detector benchmark and future scientific annotation protocol are
+documented in [Detector evaluation](docs/EVALUATION.md).

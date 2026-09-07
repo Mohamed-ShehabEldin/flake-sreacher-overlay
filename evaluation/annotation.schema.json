@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flake-searcher.local/schemas/scientific-annotations-v1.json",
+  "title": "Human-reviewed flake annotations",
+  "description": "Schema only. The repository contains no placeholder or asserted scientific annotations.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "scientific_definition",
+    "review_status",
+    "reviewers",
+    "images"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "scientific_definition": {"type": "string", "minLength": 1},
+    "review_status": {"enum": ["draft", "reviewed"]},
+    "reviewers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "role"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "role": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "completed_utc": {"type": "string", "format": "date-time"},
+    "images": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "sha256",
+          "width",
+          "height",
+          "complete_review",
+          "review_status",
+          "regions"
+        ],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "width": {"type": "integer", "minimum": 1},
+          "height": {"type": "integer", "minimum": 1},
+          "complete_review": {"type": "boolean"},
+          "review_status": {"enum": ["draft", "reviewed"]},
+          "notes": {"type": "string"},
+          "regions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "disposition", "polygon"],
+              "properties": {
+                "id": {"type": "string", "minLength": 1},
+                "disposition": {"enum": ["valid", "excluded", "uncertain"]},
+                "category": {"type": "string"},
+                "notes": {"type": "string"},
+                "polygon": {
+                  "type": "array",
+                  "minItems": 3,
+                  "items": {
+                    "type": "array",
+                    "prefixItems": [
+                      {"type": "number", "minimum": 0},
+                      {"type": "number", "minimum": 0}
+                    ],
+                    "items": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

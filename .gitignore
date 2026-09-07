@@ -53,3 +53,6 @@ assets/checkpoints/*.pt
 
 # Logs
 *.log
+
+# Generated detector evaluation output
+evaluation-results/

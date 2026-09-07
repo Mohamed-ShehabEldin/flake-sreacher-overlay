@@ -164,6 +164,20 @@ class EvaluationTests(unittest.TestCase):
                 ).hexdigest()
                 self.assertEqual(actual, expected_hash)
 
+    def test_schemas_are_definitions_not_placeholder_annotations(self):
+        report_schema = json.loads(
+            (PROJECT_ROOT / "evaluation" / "report.schema.json").read_text(encoding="utf-8")
+        )
+        annotation_schema = json.loads(
+            (PROJECT_ROOT / "evaluation" / "annotation.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(report_schema["properties"]["control"]["const"], "v0.2.0")
+        self.assertIn("complete_review", annotation_schema["properties"]["images"]["items"]["required"])
+        self.assertFalse((PROJECT_ROOT / "evaluation" / "annotations.json").exists())
+
+
 
 if __name__ == "__main__":
     unittest.main()
