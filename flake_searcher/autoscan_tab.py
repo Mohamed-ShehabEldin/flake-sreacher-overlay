@@ -8,6 +8,7 @@ from collections import deque
 
 from .motion_controller import MotionController, MotionError, MotionWorker
 from .paths import ui_path
+from .ui_feedback import set_status
 
 CONTINUOUS_STEPS = 100
 CONTINUOUS_MS    = 50
@@ -207,6 +208,17 @@ class AutoScan(QWidget):
         # scan
         self.start_btn.clicked.connect(self.start_scan)
         self.stop_btn.clicked.connect(self.stop_scan)
+        self.stop_btn.setEnabled(False)
+        self.scan_progress.setRange(0, 1)
+        self.scan_progress.setValue(0)
+
+    def _set_scan_status(self, text, state="neutral"):
+        set_status(self.scan_info, text, state)
+
+    def _set_progress(self, done, total):
+        total = max(1, int(total))
+        self.scan_progress.setRange(0, total)
+        self.scan_progress.setValue(min(total, max(0, int(done))))
 
     def mc(self):
         return self.manual_tab.motion_controller
@@ -229,7 +241,7 @@ class AutoScan(QWidget):
 
     def _require_controller(self):
         if not self._controller_ready():
-            self.scan_info.setText("Connect stage first — position unknown.")
+            self._set_scan_status("Connect stage first — position unknown.", "unknown")
             self._update_coords()
             return None
         return self.mc()
@@ -257,6 +269,7 @@ class AutoScan(QWidget):
         folder = QFileDialog.getExistingDirectory(self, "Select save folder")
         if folder:
             self.saving_folder_lineEdit.setText(folder)
+            self._set_scan_status("Output folder selected. Ready to scan.", "connected")
 
     # ── worker helper ───────────────────────────────────────────────────────
 
@@ -321,7 +334,7 @@ class AutoScan(QWidget):
     def _on_motion_failed(self, message):
         self._continuous_active = False
         self._move_queue.clear()
-        self.scan_info.setText(f"Motion error — {message}")
+        self._set_scan_status(f"Motion error — {message}", "error")
         self._update_coords()
 
     # ── single-step ─────────────────────────────────────────────────────────
@@ -388,13 +401,25 @@ class AutoScan(QWidget):
         mc = self.mc()
         if mc is None:
             z = "?" if self._supports_axis('Z') else "unavailable"
-            self.coord_display.setText(f"X: ?, Y: ?, Z: {z} — not connected")
+            set_status(
+                self.coord_display,
+                f"X: ?, Y: ?, Z: {z} — not connected",
+                "unknown",
+            )
         elif not mc.is_position_valid():
             z = "?" if mc.supports_axis('Z') else "unavailable"
-            self.coord_display.setText(f"X: ?, Y: ?, Z: {z} — POSITION UNKNOWN")
+            set_status(
+                self.coord_display,
+                f"X: ?, Y: ?, Z: {z} — POSITION UNKNOWN",
+                "unknown",
+            )
         else:
             z = mc.get_z() if mc.supports_axis('Z') else "unavailable"
-            self.coord_display.setText(f"X: {mc.get_x()}, Y: {mc.get_y()}, Z: {z}")
+            set_status(
+                self.coord_display,
+                f"X: {mc.get_x()}, Y: {mc.get_y()}, Z: {z}",
+                "connected",
+            )
 
     def show_coords(self):
         self._update_coords()
@@ -407,13 +432,16 @@ class AutoScan(QWidget):
             print("[AutoScan] No live motion controller — connect from the Manual tab first.")
             return
         if self.worker is not None:
-            self.scan_info.setText("A scan is already running.")
+            self._set_scan_status("A scan is already running.", "warning")
             return
         if self.manual_tab.has_active_motion() or self.has_active_jogging():
-            self.scan_info.setText("Wait for current manual motion to finish before scanning.")
+            self._set_scan_status(
+                "Wait for current manual motion to finish before scanning.", "warning"
+            )
             return
         save_folder = self.saving_folder_lineEdit.text().strip()
         if not save_folder:
+            self._set_scan_status("Choose a scan output folder first.", "warning")
             print("[AutoScan] Please select a save folder first.")
             return
 
@@ -440,7 +468,7 @@ class AutoScan(QWidget):
 
         owner = object()
         if not mc.acquire_exclusive(owner):
-            self.scan_info.setText("Stage is busy or its position is unknown.")
+            self._set_scan_status("Stage is busy or its position is unknown.", "unknown")
             return
 
         self._scan_owner = owner
@@ -460,32 +488,39 @@ class AutoScan(QWidget):
         self._set_jogging_enabled(False)
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
+        self._set_progress(0, slow_n * fast_n)
+        self._set_scan_status(
+            f"Scanning {slow_n} × {fast_n} positions — press Stop to interrupt.",
+            "busy",
+        )
         self.worker.start()
         print(f"[AutoScan] Started — {slow_n}×{fast_n} grid, fast={fast_axis}, save={'all' if save_all else 'detected'}")
 
     def stop_scan(self):
         if self.worker:
             self.worker.stop()
-            self.scan_info.setText("Stopping after the current operation...")
+            self._set_scan_status("Stopping after the current operation…", "warning")
             print("[AutoScan] Stop requested.")
 
     def on_stage_failed(self, message):
         self._scan_error = message
-        self.scan_info.setText(f"Scan aborted — stage error: {message}")
-        self.manual_tab.MController_status.setText(f"Stage error — {message}")
+        self._set_scan_status(f"Scan aborted — stage error: {message}", "error")
+        self.manual_tab._set_controller_status(f"Stage error — {message}", "error")
         self.manual_tab.show_coords()
         print(f"[AutoScan] Scan aborted — stage error: {message}")
 
     def on_step_done(self, info):
+        self._set_progress(info.get('done', 0), info.get('total', 1))
         if 'error' in info:
-            self.scan_info.setText(f"Error: {info['error']}")
+            self._set_scan_status(f"Frame error: {info['error']}", "warning")
             return
         x, y, z = info['x'], info['y'], info['z']
         z_text = z if self._supports_axis('Z') else "unavailable"
-        self.coord_display.setText(f"X: {x}, Y: {y}, Z: {z_text}")
+        set_status(self.coord_display, f"X: {x}, Y: {y}, Z: {z_text}", "connected")
         flake_txt = f"flake=YES ({info['flake_size']}pts)" if info['flake_found'] else "flake=no"
-        self.scan_info.setText(
-            f"Step {info['done']}/{info['total']}  s={info['slow_i']} f={info['fast_j']}  {flake_txt}"
+        self._set_scan_status(
+            f"Step {info['done']}/{info['total']}  s={info['slow_i']} f={info['fast_j']}  {flake_txt}",
+            "busy",
         )
 
     def on_finished(self):
@@ -499,5 +534,5 @@ class AutoScan(QWidget):
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         if self._scan_error is None:
-            self.scan_info.setText("Scan finished.")
+            self._set_scan_status("Scan finished.", "connected")
             print("[AutoScan] Scan finished.")

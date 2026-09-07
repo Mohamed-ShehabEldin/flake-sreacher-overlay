@@ -1,62 +1,85 @@
-# window_interaction_handler.py
+from PyQt5.QtCore import QEvent, QObject, QPoint, QSize, Qt
 
-from PyQt5.QtCore import Qt, QPoint
 
-class WindowInteractionHandler:
-    """
-    A class to manage window dragging via markers and resizing via bottom-right corner.
-    Connect this to your MainWindow and forward mouse events to it.
+class WindowInteractionHandler(QObject):
+    """Handle explicit frameless-window movement and capture-frame resizing."""
 
-    Usage:
-        self.interaction_handler = WindowInteractionHandler(self)
-        self.mousePressEvent = self.interaction_handler.mousePressEvent
-        ...
-    """
-
-    def __init__(self, main_window):
+    def __init__(self, main_window, move_handles, resize_handle, drag_header):
+        super().__init__(main_window)
         self.main = main_window
-        self.is_resizing = False
-        self.is_global_move = False
+        self.move_handles = tuple(move_handles)
+        self.resize_handle = resize_handle
+        self.drag_header = drag_header
+        self._moving = False
+        self._resizing = False
+        self._move_offset = QPoint()
+        self._resize_start_global = QPoint()
+        self._resize_start_size = QSize()
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.start_pos = event.globalPos()
-            self.start_geometry = self.main.image_frame.geometry()
-            self.start_window_geometry = self.main.geometry()
+        for widget in (*self.move_handles, self.resize_handle, self.drag_header):
+            widget.installEventFilter(self)
 
-        if self.is_near_bottom_right(event.pos()):
-            self.is_resizing = True
+    def eventFilter(self, watched, event):
+        event_type = event.type()
 
-        if self.main.move_mark_2.geometry().contains(event.pos() - self.main.image_frame.pos()):
-            #or \ self.main.move_mark_1.geometry().contains(event.pos() - self.main.all_tabWidget.pos()) or \
-            self.is_global_move = True
-            self.start_pos = event.globalPos() - self.main.frameGeometry().topLeft()
+        if watched is self.drag_header and event_type == QEvent.MouseButtonDblClick:
+            if event.button() == Qt.LeftButton:
+                self.main.toggle_maximize_restore()
+                return True
 
-    def mouseMoveEvent(self, event):
-        if self.is_resizing:
-            delta = event.globalPos() - self.start_pos
-            new_width = max(20, self.start_geometry.width() + delta.x())
-            new_height = max(20, self.start_geometry.height() + delta.y())
+        if event_type == QEvent.MouseButtonPress:
+            if event.button() != Qt.LeftButton:
+                return False
+            if watched is self.resize_handle:
+                self._begin_resize(event.globalPos())
+                return True
+            if watched in self.move_handles or watched is self.drag_header:
+                self._begin_move(event.globalPos())
+                return True
 
-            self.main.image_frame.setGeometry(
-                self.start_geometry.left(), self.start_geometry.top(),
-                new_width, new_height
-            )
+        if event_type == QEvent.MouseMove:
+            if self._resizing and event.buttons() & Qt.LeftButton:
+                self._resize(event.globalPos())
+                return True
+            if self._moving and event.buttons() & Qt.LeftButton:
+                self.main.move(event.globalPos() - self._move_offset)
+                return True
 
-            self.main.resize(
-                self.start_window_geometry.width() + delta.x(),
-                self.start_window_geometry.height() + delta.y()
-            )
+        if event_type == QEvent.MouseButtonRelease:
+            if event.button() == Qt.LeftButton and (self._moving or self._resizing):
+                self._moving = False
+                self._resizing = False
+                return True
 
-            self.main.all_tabWidget.move(new_width, new_height - self.main.all_tabWidget.height())
+        return super().eventFilter(watched, event)
 
-        if self.is_global_move:
-            self.main.move(event.globalPos() - self.start_pos)
+    def _begin_move(self, global_pos):
+        if self.main.isMaximized():
+            self.main.restore_for_drag(global_pos)
+        self._moving = True
+        self._resizing = False
+        self._move_offset = global_pos - self.main.frameGeometry().topLeft()
 
-    def mouseReleaseEvent(self, event):
-        self.is_resizing = False
-        self.is_global_move = False
+    def _begin_resize(self, global_pos):
+        if self.main.isMaximized():
+            self.main.restore_window()
+        self._resizing = True
+        self._moving = False
+        self._resize_start_global = QPoint(global_pos)
+        self._resize_start_size = QSize(self.main.image_frame.size())
 
-    def is_near_bottom_right(self, pos):
-        return (20 <= pos.x() <= self.main.image_frame.width()) and \
-               (20 <= pos.y() <= self.main.image_frame.height())
+    def _resize(self, global_pos):
+        delta = global_pos - self._resize_start_global
+        requested = QSize(
+            self._resize_start_size.width() + delta.x(),
+            self._resize_start_size.height() + delta.y(),
+        )
+        self.main.resize_capture_frame(requested)
+
+    @property
+    def is_moving(self):
+        return self._moving
+
+    @property
+    def is_resizing(self):
+        return self._resizing

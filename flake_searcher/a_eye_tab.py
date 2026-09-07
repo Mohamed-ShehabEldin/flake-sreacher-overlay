@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QFileDialog, QDialog, QLabel, QScrollArea, QVBoxLayout
-from PyQt5.QtCore import QThread, pyqtSignal, QEvent
+from PyQt5.QtCore import QThread, pyqtSignal, QEvent, Qt
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QGraphicsScene
 from PyQt5 import uic
@@ -10,6 +10,7 @@ import shutil
 from .pipeline import AutoScanPipeline
 from .image_frame_manager import ImageFrameManager
 from .paths import ui_path
+from .ui_feedback import set_status
 
 
 class InferenceWorker(QThread):
@@ -112,10 +113,30 @@ class A_Eye_Tab(QWidget):
         self.check_current_win_btn.clicked.connect(self.check_current_window)
         self.check_fldr_btn.clicked.connect(self.check_folder)
 
+    def _set_status(self, text, state="neutral"):
+        set_status(self.info, text, state)
+
+    def _set_busy(self, busy):
+        for button in (
+            self.chose_model_btn,
+            self.check_an_img_btn,
+            self.check_current_win_btn,
+            self.check_fldr_btn,
+        ):
+            button.setEnabled(not busy)
+
     def eventFilter(self, obj, event):
-        if obj is self.graphicsView.viewport() and event.type() == QEvent.MouseButtonDblClick:
-            self._open_fullsize()
+        if obj is self.graphicsView.viewport():
+            if event.type() == QEvent.MouseButtonDblClick:
+                self._open_fullsize()
+            elif event.type() == QEvent.Resize:
+                self._fit_result()
         return super().eventFilter(obj, event)
+
+    def _fit_result(self):
+        scene = self.graphicsView.scene()
+        if scene is not None and not scene.itemsBoundingRect().isEmpty():
+            self.graphicsView.fitInView(scene.itemsBoundingRect(), Qt.KeepAspectRatio)
 
     def _open_fullsize(self):
         if self._last_pixmap is None:
@@ -139,8 +160,10 @@ class A_Eye_Tab(QWidget):
             self.chose_model_lineEdit.setText(path)
             try:
                 self.pipeline.load_model_from_path(path)
+                self._set_status(f"Model loaded: {os.path.basename(path)}", "connected")
                 print(f"[A-Eye] Model loaded ← {path}")
             except Exception as e:
+                self._set_status(f"Model load failed — {e}", "error")
                 print(f"[A-Eye] Error loading model: {e}")
 
     def _get_params(self):
@@ -152,13 +175,15 @@ class A_Eye_Tab(QWidget):
 
     def _run_inference(self, image):
         if self.pipeline._model is None:
+            self._set_status("Choose a detector model first.", "warning")
             print("[A-Eye] Please load a model first.")
             return
         ratio, batch_size, radius = self._get_params()
         self.worker = InferenceWorker(self.pipeline, image, ratio, batch_size, radius)
-        self.info.setText("Running inference...")
+        self._set_busy(True)
+        self._set_status("Running inference…", "busy")
         self.worker.done.connect(self._show_result)
-        self.worker.error.connect(lambda msg: print(f"[A-Eye] Error: {msg}"))
+        self.worker.error.connect(self._on_inference_error)
         self.worker.start()
 
     def check_image(self):
@@ -168,6 +193,7 @@ class A_Eye_Tab(QWidget):
 
     def check_folder(self):
         if self.pipeline._model is None:
+            self._set_status("Choose a detector model first.", "warning")
             print("[A-Eye] Please load a model first.")
             return
 
@@ -177,7 +203,8 @@ class A_Eye_Tab(QWidget):
 
         ratio, batch_size, radius = self._get_params()
         self.worker = FolderInferenceWorker(self.pipeline, folder, ratio, batch_size, radius)
-        self.info.setText("Checking folder...")
+        self._set_busy(True)
+        self._set_status("Checking folder…", "busy")
         self.worker.done.connect(self._on_folder_done)
         self.worker.error.connect(self._on_folder_error)
         self.worker.start()
@@ -188,6 +215,7 @@ class A_Eye_Tab(QWidget):
             bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
             self._run_inference(bgr)
         except Exception as e:
+            self._set_status(f"Microscope capture failed — {e}", "error")
             print(f"[A-Eye] Screenshot failed: {e}")
 
     def _show_result(self, _cls_mat, img_disp, stats):
@@ -201,7 +229,7 @@ class A_Eye_Tab(QWidget):
         scene = QGraphicsScene()
         scene.addPixmap(pixmap)
         self.graphicsView.setScene(scene)
-        self.graphicsView.fitInView(scene.itemsBoundingRect())
+        self._fit_result()
 
         info_text = (
             f"flakes: {stats['filtered']}  (raw: {stats['raw']})  |  "
@@ -209,13 +237,21 @@ class A_Eye_Tab(QWidget):
             f"bg: {stats['bg']}  |  "
             f"{stats['elapsed']:.1f}s"
         )
-        self.info.setText(info_text)
+        self._set_busy(False)
+        self._set_status(info_text, "connected")
         print(f"[A-Eye] {info_text}")
 
+    def _on_inference_error(self, message):
+        self._set_busy(False)
+        self._set_status(f"Inference failed — {message}", "error")
+        print(f"[A-Eye] Error: {message}")
+
     def _on_folder_done(self, msg):
-        self.info.setText(msg)
+        self._set_busy(False)
+        self._set_status(msg, "connected")
         print(f"[A-Eye] {msg}")
 
     def _on_folder_error(self, msg):
-        self.info.setText("Folder check failed.")
+        self._set_busy(False)
+        self._set_status(f"Folder check failed — {msg}", "error")
         print(f"[A-Eye] Error: {msg}")

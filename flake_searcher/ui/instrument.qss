@@ -1,0 +1,145 @@
+QFrame#control_panel {
+    background: #f3f5f7;
+    color: #1f2933;
+    border-left: 1px solid #aeb8c2;
+}
+
+QWidget#window_header {
+    background: #dfe5ea;
+    border-bottom: 1px solid #aeb8c2;
+}
+
+QLabel#window_title_label {
+    color: #1f2933;
+    font-weight: 600;
+}
+
+QPushButton#minimize_btn,
+QPushButton#maximize_restore_btn,
+QPushButton#close_btn {
+    min-width: 30px;
+    min-height: 26px;
+    max-width: 30px;
+    max-height: 26px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background: transparent;
+}
+
+QPushButton#minimize_btn:hover,
+QPushButton#maximize_restore_btn:hover {
+    background: #cbd4dc;
+    border-color: #9ca9b5;
+}
+
+QPushButton#close_btn:hover {
+    color: white;
+    background: #b42318;
+}
+
+QFrame#control_panel QTabWidget::pane {
+    background: #f3f5f7;
+    border: 0;
+}
+
+QFrame#control_panel QTabBar::tab {
+    min-width: 54px;
+    padding: 7px 8px;
+    color: #33424f;
+    background: #dfe5ea;
+    border: 0;
+    border-right: 1px solid #c1c9d0;
+}
+
+QFrame#control_panel QTabBar::tab:selected {
+    color: #123f65;
+    background: #ffffff;
+    border-bottom: 2px solid #1769aa;
+}
+
+QFrame#control_panel QScrollArea,
+QFrame#control_panel QScrollArea > QWidget > QWidget {
+    background: #f3f5f7;
+}
+
+QFrame#control_panel QGroupBox {
+    margin-top: 10px;
+    padding-top: 8px;
+    font-weight: 600;
+    border: 1px solid #c7ced6;
+    border-radius: 4px;
+    background: #ffffff;
+}
+
+QFrame#control_panel QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 8px;
+    padding: 0 4px;
+    color: #33424f;
+}
+
+QFrame#control_panel QLabel {
+    color: #1f2933;
+}
+
+QFrame#control_panel QLabel[secondary="true"] {
+    color: #52616b;
+}
+
+QFrame#control_panel QLabel[statusState="connected"] {
+    color: #237a3b;
+    font-weight: 600;
+}
+
+QFrame#control_panel QLabel[statusState="busy"] {
+    color: #1769aa;
+    font-weight: 600;
+}
+
+QFrame#control_panel QLabel[statusState="warning"] {
+    color: #9a5b00;
+    font-weight: 600;
+}
+
+QFrame#control_panel QLabel[statusState="error"],
+QFrame#control_panel QLabel[statusState="unknown"] {
+    color: #b42318;
+    font-weight: 600;
+}
+
+QFrame#control_panel QPushButton {
+    min-height: 26px;
+    padding: 3px 8px;
+}
+
+QFrame#control_panel QPushButton[safety="true"] {
+    color: #8b1a12;
+    border: 1px solid #b42318;
+    font-weight: 600;
+}
+
+QFrame#control_panel QPushButton[stopAction="true"] {
+    color: white;
+    background: #b42318;
+    border: 1px solid #8f1c13;
+    font-weight: 700;
+}
+
+QFrame#control_panel QPushButton[stopAction="true"]:disabled {
+    color: #727b83;
+    background: #dfe3e7;
+    border-color: #c4cbd2;
+}
+
+QFrame#control_panel QLineEdit,
+QFrame#control_panel QComboBox,
+QFrame#control_panel QSpinBox,
+QFrame#control_panel QDoubleSpinBox {
+    min-height: 24px;
+    background: white;
+}
+
+QFrame#control_panel QWidget:disabled {
+    color: #7a828a;
+}
