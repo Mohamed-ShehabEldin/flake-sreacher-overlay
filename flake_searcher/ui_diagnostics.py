@@ -14,6 +14,14 @@ import numpy as np
 from .evaluation import EvaluationError, prepare_evaluation_paths, sha256_file
 
 
+def configure_console_output(*streams) -> None:
+    """Escape characters unsupported by a diagnostic console's encoding."""
+    for stream in streams:
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(errors="backslashreplace")
+
+
 def summarize_heartbeats(samples: list[dict], target_interval_ms: float) -> dict:
     by_phase = defaultdict(list)
     for sample in samples:

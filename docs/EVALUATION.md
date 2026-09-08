@@ -29,6 +29,8 @@ It also categorically refuses output below the repository's `flakes/`,
 Inputs are hashed before and after evaluation. Reports, CSV timing records,
 masks, and overlays are written only below the output directory. Masks and
 overlays are optional derived products; originals are never copied or rewritten.
+The control manifest hashes detector source as UTF-8 text after normalizing CRLF
+line endings to LF. Model hashes always cover the exact binary file bytes.
 
 `report.json` records the Git commit, platform, Python and relevant package
 versions, selected model path and hash, detector parameters, TensorFlow import
@@ -69,7 +71,8 @@ python tools/probe_ui_responsiveness.py \
 It measures synchronous model loading on a Qt event loop and heartbeat latency
 while the existing A-Eye inference worker runs. It does not open the production
 window, render results, capture the screen, start Auto Scan, use serial hardware,
-or instrument production UI code.
+or instrument production UI code. The diagnostic CLI preserves the active
+console encoding and backslash-escapes characters that encoding cannot represent.
 
 For Mac/Windows comparison, use the same commit, model hash, input hashes, and
 parameters. Run each command in the pinned runtime environment under comparable

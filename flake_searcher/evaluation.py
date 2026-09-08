@@ -50,6 +50,13 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def canonical_source_sha256(path: Path) -> str:
+    """Hash UTF-8 source text after normalizing CRLF line endings to LF."""
+    source = path.read_bytes().decode("utf-8")
+    canonical_source = source.replace("\r\n", "\n")
+    return hashlib.sha256(canonical_source.encode("utf-8")).hexdigest()
+
+
 def hash_array(array: np.ndarray) -> str:
     contiguous = np.ascontiguousarray(array)
     digest = hashlib.sha256()

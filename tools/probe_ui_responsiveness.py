@@ -10,10 +10,11 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from flake_searcher.evaluation import EvaluationError
-from flake_searcher.ui_diagnostics import run_ui_probe
+from flake_searcher.ui_diagnostics import configure_console_output, run_ui_probe
 
 
 def main(argv=None):
+    configure_console_output(sys.stdout, sys.stderr)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", required=True)
     parser.add_argument("--input", required=True, help="Exactly one explicit image file")

@@ -4,6 +4,7 @@
   "detector": {
     "path": "flake_searcher/detector.py",
     "sha256": "eaeaeb8defecf3b24c23fbf2ba0b2247275d7997f42b8ea7c6f6629491dc1eee",
+    "sha256_convention": "SHA-256 of UTF-8 source text after replacing CRLF (\\r\\n) with LF (\\n); all other source text remains unchanged.",
     "fixed_postprocessing": {
       "minimum_component_grid_points": 5,
       "connectivity": 8,

@@ -11,6 +11,7 @@ from flake_searcher.detector import test_grid_batched as run_detector
 from flake_searcher.evaluation import (
     EvaluationError,
     PredictionRecorder,
+    canonical_source_sha256,
     evaluate_image,
     hash_array,
     prepare_evaluation_paths,
@@ -157,13 +158,50 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(first["filtered_points"], 20)
         self.assertTrue(np.all(mask == 1))
 
+    def test_canonical_source_hash_normalizes_crlf_to_lf(self):
+        with tempfile.TemporaryDirectory() as folder:
+            lf_source = Path(folder) / "lf.py"
+            crlf_source = Path(folder) / "crlf.py"
+            lf_source.write_bytes(b"value = 1\nprint(value)\n")
+            crlf_source.write_bytes(b"value = 1\r\nprint(value)\r\n")
+
+            self.assertEqual(
+                canonical_source_sha256(lf_source),
+                canonical_source_sha256(crlf_source),
+            )
+
+    def test_canonical_source_hash_detects_source_changes(self):
+        with tempfile.TemporaryDirectory() as folder:
+            original = Path(folder) / "original.py"
+            changed = Path(folder) / "changed.py"
+            original.write_text("value = 1\n", encoding="utf-8")
+            changed.write_text("value = 2\n", encoding="utf-8")
+
+            self.assertNotEqual(
+                canonical_source_sha256(original),
+                canonical_source_sha256(changed),
+            )
+
+    def test_binary_hash_remains_byte_exact(self):
+        with tempfile.TemporaryDirectory() as folder:
+            first = Path(folder) / "first.h5"
+            second = Path(folder) / "second.h5"
+            first.write_bytes(b"model\nweights\x00")
+            second.write_bytes(b"model\r\nweights\x00")
+
+            self.assertNotEqual(sha256_file(first), sha256_file(second))
+            self.assertEqual(
+                sha256_file(first), hashlib.sha256(first.read_bytes()).hexdigest()
+            )
+
     def test_control_manifest_pins_unchanged_detector_and_models(self):
         control = json.loads(
             (PROJECT_ROOT / "evaluation" / "control-v0.2.0.json").read_text(encoding="utf-8")
         )
         self.assertEqual(control["commit"], "ce830f7ba07dc4a8d3789edb0cc3b6c3d87e438a")
+        self.assertIn("replacing CRLF", control["detector"]["sha256_convention"])
         self.assertEqual(
-            sha256_file(PROJECT_ROOT / control["detector"]["path"]),
+            canonical_source_sha256(PROJECT_ROOT / control["detector"]["path"]),
             control["detector"]["sha256"],
         )
         for filename, expected_hash in control["models"].items():
