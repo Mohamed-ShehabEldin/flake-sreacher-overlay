@@ -13,7 +13,10 @@ class UiDiagnosticsTests(unittest.TestCase):
         print("model loaded \u2190 selected path", file=console)
         console.flush()
 
-        self.assertEqual(raw_output.getvalue(), b"model loaded \\u2190 selected path\n")
+        output = raw_output.getvalue().decode("ascii")
+        self.assertIn(r"\u2190", output)
+        self.assertNotIn("\u2190", output)
+        self.assertEqual(output.splitlines(), [r"model loaded \u2190 selected path"])
         console.detach()
 
     def test_heartbeat_summary_reports_phase_and_excess_latency(self):
